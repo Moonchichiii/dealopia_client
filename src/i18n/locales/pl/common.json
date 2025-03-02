@@ -1,0 +1,68 @@
+{
+  "navigation": {
+    "deals": "Promocje",
+    "shops": "Sklepy",
+    "categories": "Kategorie",
+    "about": "O nas"
+  },
+  "auth": {
+    "login": "Zaloguj się",
+    "signup": "Zarejestruj się"
+  },
+  "deal": {
+    "viewDeal": "Zobacz promocję",
+    "exclusive": "Wyłącznie"
+  },
+  "footer": {
+    "categories": "Kategorie",
+    "categoryItems": {
+      "food": "Żywność & Gastronomia",
+      "fashion": "Moda & Odzież",
+      "books": "Książki & Artykuły papiernicze",
+      "wellness": "Wellness & Uroda",
+      "entertainment": "Rozrywka"
+    },
+    "forBusinesses": "Dla firm",
+    "businessItems": {
+      "listBusiness": "Dodaj swoją firmę",
+      "dashboard": "Panel firmy",
+      "advertise": "Reklamuj się u nas",
+      "successStories": "Historie sukcesu"
+    },
+    "helpSupport": "Pomoc & Wsparcie",
+    "helpItems": {
+      "howItWorks": "Jak to działa",
+      "faq": "FAQ",
+      "contactUs": "Kontakt",
+      "privacy": "Polityka prywatności",
+      "terms": "Warunki korzystania"
+    },
+    "copyright": "© {{year}} Dealopia. Wszelkie prawa zastrzeżone."
+  },
+  "home": {
+    "hero": {
+      "title": "Odkryj niesamowite lokalne promocje",
+      "subtitle": "Znajdź najlepsze zniżki w swoich ulubionych lokalnych sklepach. Oszczędzaj pieniądze wspierając swoją społeczność.",
+      "explore": "Przeglądaj promocje",
+      "learnMore": "Dowiedz się więcej"
+    },
+    "trending": {
+      "title": "Popularne promocje",
+      "subtitle": "Gorące oferty, o których wszyscy mówią",
+      "viewAll": "Zobacz wszystkie promocje"
+    },
+    "shops": {
+      "title": "Polecane sklepy",
+      "subtitle": "Odkryj lokalne firmy z atrakcyjnymi ofertami",
+      "viewAll": "Przeglądaj wszystkie sklepy"
+    },
+    "newsletter": {
+      "title": "Nigdy nie przegap promocji",
+      "subtitle": "Zapisz się do naszego newslettera, aby otrzymywać ekskluzywne oferty",
+      "placeholder": "Twój adres email",
+      "subscribe": "Zapisz się",
+      "success": "Dziękujemy za zapisanie się!",
+      "error": "Coś poszło nie tak. Spróbuj ponownie."
+    }
+  }
+}

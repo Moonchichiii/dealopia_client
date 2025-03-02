@@ -1,0 +1,69 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-bgPrimary text-textPrimary;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  a, button {
+    @apply transition-all duration-300;
+  }
+
+  h1, .h1 {
+    @apply text-4xl leading-tight font-extrabold tracking-tight md:text-5xl lg:text-6xl;
+  }
+
+  h2, .h2 {
+    @apply text-3xl leading-tight font-bold tracking-tight md:text-4xl;
+  }
+
+  h3, .h3 {
+    @apply text-2xl leading-tight font-bold md:text-3xl;
+  }
+
+  h4, .h4 {
+    @apply text-xl leading-snug font-semibold;
+  }
+
+  h5, .h5 {
+    @apply text-lg leading-snug font-semibold;
+  }
+
+  p {
+    @apply leading-relaxed;
+  }
+}
+
+@layer components {
+  .container {
+    @apply w-full mx-auto px-4 md:px-6 lg:px-8 max-w-7xl;
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center rounded-full font-semibold transition-all focus:outline-none;
+  }
+
+  .btn-primary {
+    @apply bg-accentPink text-white hover:-translate-y-0.5 hover:shadow-lg hover:shadow-accentPink/40;
+  }
+
+  .btn-secondary {
+    @apply bg-transparent border border-textSecondary text-textPrimary hover:border-accentPink hover:text-accentPink;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  @apply w-2 h-2;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-bgSecondary/50;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-accentPink/50 rounded-sm hover:bg-accentPink/80;
+}

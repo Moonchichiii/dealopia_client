@@ -1,0 +1,68 @@
+{
+    "navigation": {
+      "deals": "Angebote",
+      "shops": "Geschäfte",
+      "categories": "Kategorien",
+      "about": "Über uns"
+    },
+    "auth": {
+      "login": "Anmelden",
+      "signup": "Registrieren"
+    },
+    "deal": {
+      "viewDeal": "Angebot ansehen",
+      "exclusive": "Exklusiv"
+    },
+    "footer": {
+      "categories": "Kategorien",
+      "categoryItems": {
+        "food": "Essen & Gastronomie",
+        "fashion": "Mode & Bekleidung",
+        "books": "Bücher & Schreibwaren",
+        "wellness": "Wellness & Schönheit",
+        "entertainment": "Unterhaltung"
+      },
+      "forBusinesses": "Für Unternehmen",
+      "businessItems": {
+        "listBusiness": "Ihr Unternehmen eintragen",
+        "dashboard": "Unternehmens-Dashboard",
+        "advertise": "Bei uns werben",
+        "successStories": "Erfolgsgeschichten"
+      },
+      "helpSupport": "Hilfe & Support",
+      "helpItems": {
+        "howItWorks": "Wie es funktioniert",
+        "faq": "Häufige Fragen",
+        "contactUs": "Kontaktiere uns",
+        "privacy": "Datenschutzrichtlinie",
+        "terms": "Nutzungsbedingungen"
+      },
+      "copyright": "© {{year}} Dealopia. Alle Rechte vorbehalten."
+    },
+    "home": {
+      "hero": {
+        "title": "Entdecke großartige lokale Angebote",
+        "subtitle": "Finde die besten Rabatte von deinen Lieblingsgeschäften vor Ort. Spare Geld und unterstütze deine Gemeinschaft.",
+        "explore": "Angebote erkunden",
+        "learnMore": "Mehr erfahren"
+      },
+      "trending": {
+        "title": "Aktuelle Angebote",
+        "subtitle": "Heiße Angebote, über die jeder spricht",
+        "viewAll": "Alle Angebote anzeigen"
+      },
+      "shops": {
+        "title": "Empfohlene Geschäfte",
+        "subtitle": "Entdecke lokale Unternehmen mit tollen Angeboten",
+        "viewAll": "Alle Geschäfte durchsuchen"
+      },
+      "newsletter": {
+        "title": "Verpasse kein Angebot",
+        "subtitle": "Abonniere unseren Newsletter für exklusive Angebote",
+        "placeholder": "Deine E-Mail-Adresse",
+        "subscribe": "Abonnieren",
+        "success": "Vielen Dank für dein Abonnement!",
+        "error": "Etwas ist schiefgelaufen. Bitte versuche es erneut."
+      }
+    }
+  }

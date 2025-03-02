@@ -1,0 +1,68 @@
+{
+    "navigation": {
+      "deals": "Offres",
+      "shops": "Boutiques",
+      "categories": "Catégories",
+      "about": "À propos"
+    },
+    "auth": {
+      "login": "Se connecter",
+      "signup": "S'inscrire"
+    },
+    "deal": {
+      "viewDeal": "Voir l'offre",
+      "exclusive": "Exclusif"
+    },
+    "footer": {
+      "categories": "Catégories",
+      "categoryItems": {
+        "food": "Alimentation & Restaurants",
+        "fashion": "Mode & Vêtements",
+        "books": "Livres & Papeterie",
+        "wellness": "Bien-être & Beauté",
+        "entertainment": "Divertissement"
+      },
+      "forBusinesses": "Pour les entreprises",
+      "businessItems": {
+        "listBusiness": "Inscrivez votre entreprise",
+        "dashboard": "Tableau de bord",
+        "advertise": "Annoncez avec nous",
+        "successStories": "Histoires de réussite"
+      },
+      "helpSupport": "Aide & Support",
+      "helpItems": {
+        "howItWorks": "Comment ça marche",
+        "faq": "FAQ",
+        "contactUs": "Contactez-nous",
+        "privacy": "Politique de confidentialité",
+        "terms": "Conditions d'utilisation"
+      },
+      "copyright": "© {{year}} Dealopia. Tous droits réservés."
+    },
+    "home": {
+      "hero": {
+        "title": "Découvrez des offres locales incroyables",
+        "subtitle": "Trouvez les meilleures réductions dans vos boutiques locales préférées. Économisez de l'argent tout en soutenant votre communauté.",
+        "explore": "Explorer les offres",
+        "learnMore": "En savoir plus"
+      },
+      "trending": {
+        "title": "Offres tendance",
+        "subtitle": "Les meilleures offres dont tout le monde parle",
+        "viewAll": "Voir toutes les offres"
+      },
+      "shops": {
+        "title": "Boutiques en vedette",
+        "subtitle": "Découvrez les entreprises locales avec de superbes offres",
+        "viewAll": "Parcourir toutes les boutiques"
+      },
+      "newsletter": {
+        "title": "Ne manquez jamais une offre",
+        "subtitle": "Abonnez-vous à notre newsletter pour des offres exclusives",
+        "placeholder": "Votre adresse e-mail",
+        "subscribe": "S'abonner",
+        "success": "Merci pour votre abonnement !",
+        "error": "Une erreur s'est produite. Veuillez réessayer."
+      }
+    }
+  }
