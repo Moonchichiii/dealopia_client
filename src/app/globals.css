@@ -1,69 +1,66 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
-@layer base {
-  body {
-    @apply bg-bgPrimary text-textPrimary;
-    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
-  }
-
-  a, button {
-    @apply transition-all duration-300;
-  }
-
-  h1, .h1 {
-    @apply text-4xl leading-tight font-extrabold tracking-tight md:text-5xl lg:text-6xl;
-  }
-
-  h2, .h2 {
-    @apply text-3xl leading-tight font-bold tracking-tight md:text-4xl;
-  }
-
-  h3, .h3 {
-    @apply text-2xl leading-tight font-bold md:text-3xl;
-  }
-
-  h4, .h4 {
-    @apply text-xl leading-snug font-semibold;
-  }
-
-  h5, .h5 {
-    @apply text-lg leading-snug font-semibold;
-  }
-
-  p {
-    @apply leading-relaxed;
-  }
+@theme {
+  /* Core colors */
+  --color-bg-primary: #0E0C15;
+  --color-bg-secondary: #1A1727;
+  --color-text-primary: #FFFFFF;
+  --color-text-secondary: #C9C7CF;
+  --color-accent-pink: #FF38B4;
+  --color-accent-blue: #70BCFF;
+  --color-accent-yellow: #FCFC88;
+  --color-accent-green: #00F5A0;
+  
+  /* Border radius */
+  --rounded-sm: 0.75rem;
+  --rounded-md: 1rem;
+  --rounded-lg: 1.5rem;
+  
+  /* Shadows */
+  --shadow-custom: 0 8px 32px rgba(0, 0, 0, 0.2);
+  
+  /* Animations */
+  --ease-custom: cubic-bezier(0.4, 0, 0.2, 1);
+  
+  /* Animation keyframes */
+  --keyframes-fadeIn: {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  };
 }
 
-@layer components {
-  .container {
-    @apply w-full mx-auto px-4 md:px-6 lg:px-8 max-w-7xl;
-  }
-
-  .btn {
-    @apply inline-flex items-center justify-center rounded-full font-semibold transition-all focus:outline-none;
-  }
-
-  .btn-primary {
-    @apply bg-accentPink text-white hover:-translate-y-0.5 hover:shadow-lg hover:shadow-accentPink/40;
-  }
-
-  .btn-secondary {
-    @apply bg-transparent border border-textSecondary text-textPrimary hover:border-accentPink hover:text-accentPink;
-  }
+/* Font settings */
+body {
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
 }
 
 /* Custom scrollbar */
 ::-webkit-scrollbar {
-  @apply w-2 h-2;
+  width: 0.5rem;
+  height: 0.5rem;
 }
 
 ::-webkit-scrollbar-track {
-  @apply bg-bgSecondary/50;
+  background: rgba(26, 23, 39, 0.5);
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-accentPink/50 rounded-sm hover:bg-accentPink/80;
+  background: rgba(255, 56, 180, 0.5);
+  border-radius: 0.25rem;
 }
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 56, 180, 0.8);
+}
+
+/* Animation classes */
+.animate-fadeIn {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+
