@@ -1,7 +1,7 @@
 'use client';
 
 import { useLayoutEffect, useRef } from 'react';
-import { gsap, ScrollSmoother, ScrollTrigger } from '@/utils/gsap';
+import { ScrollSmoother, ScrollTrigger } from '@/utils/gsap';
 import  { Header }  from '@/components/layout/Header';
 import  Footer from '@/components/layout/Footer';
 import  HeroSection  from '@/components/home/HeroSection';
