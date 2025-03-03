@@ -1,41 +1,39 @@
-'use client';
-
 import { useLayoutEffect, useRef } from 'react';
 import { gsap, ScrollSmoother, ScrollTrigger } from '@/utils/gsap';
 import { useAuth } from '@/features/auth/contexts/AuthContext';
-import { Header } from '@/components/layout/Header';
-import { Footer } from '@/components/layout/Footer';
+import { Header } from '@/components/layout/header';
+import { Footer } from '@/components/layout/footer/Footer';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 //import { useTranslation } from 'react-i18next';
 
-
-export default function DashboardPage() {
+export default function DashboardPage(): JSX.Element {
   const { user, logout } = useAuth();
-  const smoothWrapperRef = useRef<HTMLDivElement>(null);
-  const smoothContentRef = useRef<HTMLDivElement>(null);
+  const smoothWrapperRef = useRef<HTMLDivElement | null>(null);
+  const smoothContentRef = useRef<HTMLDivElement | null>(null);
   
   // Initialize smooth scrolling
   useLayoutEffect(() => {
+    if (!smoothWrapperRef.current || !smoothContentRef.current) return;
+
     // Create scroll smoother for smooth scrolling effect
     const smoother = ScrollSmoother.create({
-      wrapper: smoothWrapperRef.current!,
-      content: smoothContentRef.current!,
+      wrapper: smoothWrapperRef.current,
+      content: smoothContentRef.current,
       smooth: 1.5, // Adjust smoothness (higher = slower)
       effects: true,
       normalizeScroll: true,
       ignoreMobileResize: true,
     });
     
-    // Set up a listener for route changes to kill ScrollTrigger instances when navigating away
-    const handleRouteChange = () => {
+    const handleRouteChange = (): void => {
       smoother.kill();
-      ScrollTrigger.getAll().forEach(trigger => trigger.kill());
+      ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
     };
     
     return () => {
       // Clean up all scroll-related instances when component unmounts
       smoother.kill();
-      ScrollTrigger.getAll().forEach(trigger => trigger.kill());
+      ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
       window.removeEventListener('beforeunload', handleRouteChange);
     };
   }, []);
@@ -74,8 +72,9 @@ export default function DashboardPage() {
               
               <div className="mt-8">
                 <button
-                  onClick={() => logout()}
+                  onClick={logout}
                   className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+                  type="button"
                 >
                   Logout
                 </button>

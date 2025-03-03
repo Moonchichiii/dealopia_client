@@ -1,12 +1,17 @@
-'use client';
-
 import React from 'react';
-import Link from 'next/link';
+import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
+import { SectionProps } from '@/types/home';
+import { Deal } from '@/types/deals';
 import DealCard from '@/components/ui/DealCard';
+import SectionHeading from '@/components/ui/SectionHeading';
 
-// Sample trending deals data
-const trendingDeals = [
+interface TrendingDealsSectionProps extends SectionProps {
+  deals?: Deal[];
+}
+
+// Sample trending deals data - in a real app, this would come from API
+const defaultDeals: Deal[] = [
   {
     id: 'deal1',
     icon: '☕',
@@ -41,30 +46,31 @@ const trendingDeals = [
     discountedPrice: null,
     discountPercentage: 50,
   }
-];
+] as unknown as Deal[]; // Type casting because our mock data doesn't fully match the Deal type
 
-const TrendingDealsSection = () => {
+export const TrendingDealsSection: React.FC<TrendingDealsSectionProps> = ({
+  className = '',
+  deals = defaultDeals,
+}) => {
   return (
-    <section className="bg-bg-primary py-24 relative z-10">
-      <div className="container">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
-            Trending Deals
-          </h2>
-          <p className="text-text-secondary text-lg max-w-xl mx-auto">
-            The most popular discounts that everyone's talking about
-          </p>
-        </div>
-       
+    <section className={`bg-bg-primary py-24 relative z-10 ${className}`}>
+      <div className="container mx-auto px-4">
+        <SectionHeading
+          title="Trending Deals"
+          description="The most popular discounts that everyone's talking about"
+          centered
+          descriptionClassName="max-w-xl mx-auto"
+        />
+        
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {trendingDeals.map((deal) => (
+          {deals.map((deal) => (
             <DealCard key={deal.id} {...deal} />
           ))}
         </div>
-       
+        
         <div className="mt-12 text-center">
           <Link
-            href="/deals"
+            to="/deals"
             className="inline-flex items-center gap-2 text-text-primary hover:text-accent-pink transition-colors font-semibold group"
           >
             View all deals

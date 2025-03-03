@@ -1,6 +1,6 @@
-@import 'tailwindcss/base';
-@import 'tailwindcss/components';
-@import 'tailwindcss/utilities';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 /* Custom CSS Variables */
 :root {
@@ -8,80 +8,139 @@
   --font-sans: 'Inter var', 'Inter', system-ui, sans-serif;
   --font-display: 'Lexend', sans-serif;
 
-  /* Color Tokens */
-  --color-primary-50: theme('colors.primary.50');
-  --color-primary-100: theme('colors.primary.100');
-  --color-primary-500: theme('colors.primary.500');
-  --color-primary-900: theme('colors.primary.900');
+  /* Color Tokens - Using direct values from your tailwind config */
+  --color-primary-50: #eef2ff;
+  --color-primary-100: #e0e7ff;
+  --color-primary-500: #6366f1;
+  --color-primary-900: #312e81;
 
-  --color-secondary-50: theme('colors.secondary.50');
-  --color-secondary-100: theme('colors.secondary.100');
-  --color-secondary-500: theme('colors.secondary.500');
-  --color-secondary-900: theme('colors.secondary.900');
+  --color-secondary-50: #f8fafc;
+  --color-secondary-100: #f1f5f9;
+  --color-secondary-500: #64748b;
+  --color-secondary-900: #0f172a;
 
-  --color-accent-50: theme('colors.accent.50');
-  --color-accent-100: theme('colors.accent.100');
-  --color-accent-500: theme('colors.accent.500');
-  --color-accent-900: theme('colors.accent.900');
+  --color-accent-50: #fff7ed;
+  --color-accent-100: #ffedd5;
+  --color-accent-500: #f97316;
+  --color-accent-900: #7c2d12;
 
-  /* Prose Variables */
-  --tw-prose-body: theme('colors.secondary.700');
-  --tw-prose-headings: theme('colors.secondary.900');
-  --tw-prose-lead: theme('colors.secondary.600');
-  --tw-prose-links: theme('colors.primary.600');
-  --tw-prose-bold: theme('colors.secondary.900');
-  --tw-prose-counters: theme('colors.secondary.500');
-  --tw-prose-bullets: theme('colors.secondary.300');
-  --tw-prose-hr: theme('colors.secondary.200');
-  --tw-prose-quotes: theme('colors.secondary.900');
-  --tw-prose-quote-borders: theme('colors.secondary.300');
-  --tw-prose-captions: theme('colors.secondary.500');
-  --tw-prose-code: theme('colors.secondary.900');
-  --tw-prose-pre-code: theme('colors.secondary.100');
-  --tw-prose-pre-bg: theme('colors.secondary.950');
-  --tw-prose-th-borders: theme('colors.secondary.300');
-  --tw-prose-td-borders: theme('colors.secondary.200');
+  /* Prose Variables - Direct values */
+  --tw-prose-body: #334155;
+  --tw-prose-headings: #0f172a;
+  --tw-prose-lead: #475569;
+  --tw-prose-links: #4f46e5;
+  --tw-prose-bold: #0f172a;
+  --tw-prose-counters: #64748b;
+  --tw-prose-bullets: #cbd5e1;
+  --tw-prose-hr: #e2e8f0;
+  --tw-prose-quotes: #0f172a;
+  --tw-prose-quote-borders: #cbd5e1;
+  --tw-prose-captions: #64748b;
+  --tw-prose-code: #0f172a;
+  --tw-prose-pre-code: #f1f5f9;
+  --tw-prose-pre-bg: #020617;
+  --tw-prose-th-borders: #cbd5e1;
+  --tw-prose-td-borders: #e2e8f0;
 }
 
 /* Dark Mode Selector */
 .dark {
   color-scheme: dark;
   
-  /* Dark mode color adjustments */
-  --tw-prose-body: theme('colors.secondary.300');
-  --tw-prose-headings: theme('colors.secondary.50');
-  --tw-prose-lead: theme('colors.secondary.400');
-  --tw-prose-links: theme('colors.primary.400');
-  --tw-prose-bold: theme('colors.secondary.50');
-  --tw-prose-counters: theme('colors.secondary.400');
-  --tw-prose-bullets: theme('colors.secondary.600');
-  --tw-prose-hr: theme('colors.secondary.700');
-  --tw-prose-quotes: theme('colors.secondary.50');
-  --tw-prose-quote-borders: theme('colors.secondary.600');
-  --tw-prose-captions: theme('colors.secondary.400');
-  --tw-prose-code: theme('colors.secondary.50');
-  --tw-prose-pre-code: theme('colors.secondary.300');
-  --tw-prose-pre-bg: theme('colors.secondary.950');
-  --tw-prose-th-borders: theme('colors.secondary.600');
-  --tw-prose-td-borders: theme('colors.secondary.700');
+  /* Dark mode color adjustments - Direct values */
+  --tw-prose-body: #cbd5e1;
+  --tw-prose-headings: #f8fafc;
+  --tw-prose-lead: #94a3b8;
+  --tw-prose-links: #818cf8;
+  --tw-prose-bold: #f8fafc;
+  --tw-prose-counters: #94a3b8;
+  --tw-prose-bullets: #475569;
+  --tw-prose-hr: #334155;
+  --tw-prose-quotes: #f8fafc;
+  --tw-prose-quote-borders: #475569;
+  --tw-prose-captions: #94a3b8;
+  --tw-prose-code: #f8fafc;
+  --tw-prose-pre-code: #cbd5e1;
+  --tw-prose-pre-bg: #020617;
+  --tw-prose-th-borders: #475569;
+  --tw-prose-td-borders: #334155;
 }
 
-/* Global Base Styles */
-html,
-body {
-  @apply scroll-smooth antialiased;
-  font-family: var(--font-sans);
-  scroll-behavior: smooth;
+@layer base {
+  /* Global Base Styles */
+  html,
+  body {
+    @apply scroll-smooth antialiased;
+    font-family: var(--font-sans);
+    scroll-behavior: smooth;
+  }
+
+  /* Custom Typography */
+  .text-display {
+    font-family: var(--font-display);
+  }
+
+  /* Smooth Scrolling for Anchor Links */
+  html {
+    scroll-padding-top: 4rem;
+  }
+
+  /* Custom Focus Styles */
+  *:focus-visible {
+    @apply outline-2 outline-offset-2;
+    outline-color: var(--color-primary-500);
+  }
+
+  /* Scrollbar Styling (Webkit Browsers) */
+  ::-webkit-scrollbar {
+    @apply w-2 bg-secondary-100 dark:bg-secondary-900;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-primary-300 rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-primary-400;
+  }
 }
 
-/* Custom Typography */
-.text-display {
-  font-family: var(--font-display);
+@layer components {
+  /* Custom Utility Classes */
+  .prose-custom {
+    @apply prose dark:prose-invert max-w-none;
+  }
+
+  /* Optional: Form Inputs Global Style */
+  input, 
+  textarea, 
+  select {
+    @apply border-secondary-300 focus:ring focus:border-primary-500 focus:ring-primary-500;
+  }
+
+  /* Optional: Button Reset */
+  .btn-reset {
+    @apply appearance-none bg-transparent border-none cursor-pointer;
+  }
 }
 
-/* Custom Utility Classes */
-.prose-custom {
-  @apply prose dark:prose-invert prose-primary max-w-none;
+@layer utilities {
+  /* Additional Animation Utilities */
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-in-out;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.5s ease-out;
+  }
+
+  .animate-slide-down {
+    animation: slideDown 0.5s ease-out;
+  }
+
+  .animate-slide-in-right {
+    animation: slideInRight 0.5s ease-out;
+  }
 }
 
 /* Accessibility Enhancements */
@@ -94,54 +153,41 @@ body {
   }
 }
 
-/* Smooth Scrolling for Anchor Links */
-html {
-  scroll-padding-top: 4rem;
+/* Keyframes for animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
-/* Custom Focus Styles */
-*:focus-visible {
-  @apply outline-2 outline-primary-500 outline-offset-2;
+@keyframes slideUp {
+  from { 
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to { 
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
-/* Scrollbar Styling (Webkit Browsers) */
-::-webkit-scrollbar {
-  @apply w-2 bg-secondary-100 dark:bg-secondary-900;
+@keyframes slideDown {
+  from { 
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to { 
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
-::-webkit-scrollbar-thumb {
-  @apply bg-primary-300 rounded-full;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  @apply bg-primary-400;
-}
-
-/* Additional Animation Utilities */
-.animate-fade-in {
-  animation: fadeIn 0.5s ease-in-out;
-}
-
-.animate-slide-up {
-  animation: slideUp 0.5s ease-out;
-}
-
-.animate-slide-down {
-  animation: slideDown 0.5s ease-out;
-}
-
-.animate-slide-in-right {
-  animation: slideInRight 0.5s ease-out;
-}
-
-/* Optional: Form Inputs Global Style */
-input, 
-textarea, 
-select {
-  @apply border-secondary-300 focus:border-primary-500 focus:ring-primary-500;
-}
-
-/* Optional: Button Reset */
-.btn-reset {
-  @apply appearance-none bg-transparent border-none cursor-pointer;
+@keyframes slideInRight {
+  from { 
+    transform: translateX(20px);
+    opacity: 0;
+  }
+  to { 
+    transform: translateX(0);
+    opacity: 1;
+  }
 }

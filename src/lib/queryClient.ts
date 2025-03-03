@@ -1,5 +1,4 @@
-// src/lib/queryClient.ts
-import { QueryClient } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister';
 import { persistQueryClient } from '@tanstack/react-query-persist-client';
 
@@ -28,4 +27,4 @@ persistQueryClient({
   maxAge: 1000 * 60 * 60 * 24, // 24 hours
 });
 
-export default queryClient;
+export { queryClient, QueryClientProvider };

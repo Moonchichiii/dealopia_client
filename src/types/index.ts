@@ -4,6 +4,7 @@ export * from './deals';
 export * from './shops';
 export * from './categories';
 export * from './locations';
+export * from './home';
 
 // Common API response types
 export interface PaginatedResponse<T> {

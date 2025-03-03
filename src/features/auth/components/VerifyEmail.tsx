@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { authApi } from '../../services/auth';
+import { authApi } from '@/api/services/auth';
 import { useMutation } from '@tanstack/react-query';
 
 const VerifyEmail: React.FC = () => {

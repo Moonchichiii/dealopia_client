@@ -22,7 +22,7 @@ export interface LoginCredentials {
 }
 
 export interface RegisterData {
-  username: string;
+  username?: string;
   email: string;
   password: string;
   password_confirm: string;
@@ -40,5 +40,22 @@ export interface AuthState {
   isAuthenticated: boolean;
   user: UserProfile | null;
   isLoading: boolean;
-  error: string | null;
+  error: AuthError | null;
+}
+
+export interface AuthError {
+  message: string;
+  code?: string;
+  fieldErrors?: Record<string, string[]>;
+}
+
+export interface ResetPasswordData {
+  uid: string;
+  token: string;
+  new_password1: string;
+  new_password2: string;
+}
+
+export interface ForgotPasswordData {
+  email: string;
 }

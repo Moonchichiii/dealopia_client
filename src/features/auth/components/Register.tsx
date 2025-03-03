@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '@/features/auth/contexts/AuthContext';
-import { RegisterForm } from './RegisterForm';
-import { ErrorMessage } from './ErrorMessage';
+import { useAuth } from '@/features/auth/hooks/useAuth';
+import { RegisterForm } from '@/components/forms/RegisterForm';
+import { ErrorMessage } from '@/components/forms/ErrorMessage';
 
 export default function Register() {
     const { register, isLoading, error } = useAuth();

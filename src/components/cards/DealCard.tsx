@@ -1,10 +1,26 @@
-'use client';
-
 import React from 'react';
-import Link from 'next/link';
+import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 
-const DealCard = ({
+interface Shop {
+  name: string;
+}
+
+interface DealCardProps {
+  id: string | number;
+  title: string;
+  description?: string;
+  shop?: Shop;
+  originalPrice?: number;
+  discountedPrice?: number;
+  discountPercentage?: number;
+  type?: 'default' | 'coffee' | 'yoga' | 'wellness' | 'book' | 'fashion';
+  icon?: React.ReactNode;
+  tag?: string;
+  isExclusive?: boolean;
+}
+
+const DealCard: React.FC<DealCardProps> = ({
   id,
   title,
   description,
@@ -74,22 +90,8 @@ const DealCard = ({
       )}
       
       <div className="flex justify-between items-center">
-        <div className="flex items-baseline gap-2">
-          {originalPrice && (
-            <span className="text-text-secondary line-through text-sm">${originalPrice.toFixed(2)}</span>
-          )}
-          
-          {discountedPrice && (
-            <span className="text-accent-pink font-bold text-xl">${discountedPrice.toFixed(2)}</span>
-          )}
-          
-          {calculatedDiscount && !discountedPrice && (
-            <span className="text-accent-pink font-bold text-xl">{calculatedDiscount}% Off</span>
-          )}
-        </div>
-        
         <Link 
-          href={`/deals/${id}`} 
+          to={`/deals/${id}`}
           className="inline-flex items-center gap-1 text-text-primary font-semibold text-sm group-hover:text-accent-pink transition-colors"
         >
           View Deal <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />

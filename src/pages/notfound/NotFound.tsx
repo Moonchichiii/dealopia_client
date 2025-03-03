@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import './NotFound.css'; 
 
 const NotFound: React.FC = () => {
     const navigate = useNavigate();
@@ -44,21 +43,25 @@ const NotFound: React.FC = () => {
     }, []);
 
     return (
-        <div className="not-found-container">
-            <h1 className="error-code">404</h1>
-            <div className="error-animation">
-                <span>😵</span>
+        <div className="min-h-screen flex flex-col items-center justify-center p-4 relative overflow-hidden">
+            <div className="text-center max-w-lg z-10">
+                <h1 className="text-7xl md:text-9xl font-bold mb-4 text-accent-pink">404</h1>
+                <div className="text-5xl mb-6">😵</div>
+                <h2 className="text-2xl md:text-3xl font-semibold mb-4">Page Not Found</h2>
+                <p className="text-text-secondary mb-6 italic">{joke}</p>
+                <p className="mb-4">Going back in {count} seconds...</p>
+                <button 
+                    onClick={goBack}
+                    className="bg-accent-pink text-white px-6 py-3 rounded-full font-medium hover:bg-accent-pink/90 transition-colors"
+                >
+                    Take Me Back Now!
+                </button>
             </div>
-            <h2 className="error-message">Page Not Found</h2>
-            <p className="error-joke">{joke}</p>
-            <p className="timer">Going back in {count} seconds...</p>
-            <button className="back-button" onClick={goBack}>
-                Take Me Back Now!
-            </button>
-            <div className="random-elements">
-                <div className="tumbling-element">🧦</div>
-                <div className="floating-element">🧩</div>
-                <div className="spinning-element">🔍</div>
+            {/* Random elements */}
+            <div className="absolute inset-0 pointer-events-none">
+                <div className="animate-bounce absolute top-1/4 left-1/4 text-3xl">🧦</div>
+                <div className="animate-pulse absolute top-1/3 right-1/4 text-3xl">🧩</div>
+                <div className="animate-spin absolute bottom-1/3 left-1/3 text-3xl">🔍</div>
             </div>
         </div>
     );

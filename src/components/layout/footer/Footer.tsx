@@ -87,7 +87,7 @@ const Footer: React.FC = () => {
                     </div>
                     <div>
                         <h4 className="text-lg font-semibold mb-5 pb-2 border-b border-primary-500/30 inline-block text-display">Help & Support</h4>
-                        <ul className="space-y-3"></ul>
+                        <ul className="space-y-3">
                             <li><a href="/help/how-it-works" className="text-secondary-300 hover:text-primary-300 transition-colors">How It Works</a></li>
                             <li><a href="/help/faqs" className="text-secondary-300 hover:text-primary-300 transition-colors">FAQs</a></li>
                             <li><a href="/help/contact" className="text-secondary-300 hover:text-primary-300 transition-colors">Contact Us</a></li>
@@ -97,13 +97,13 @@ const Footer: React.FC = () => {
                     </div>
                 </div>
                 <div className="pt-8 border-t border-secondary-700 text-center">
-                    <p className="text-secondary-400 text-sm"></p>
-                        © {currentYear} Dealopia. All rights reserved.
-                    </p>
-                </div>
-            </div>
-        </footer>
-    );
-};
+                    <p className="text-secondary-400 text-sm">    © {currentYear} Dealopia. All rights reserved.</p>
+                                    
+                      </div>    
+                      </div>          
+                      </footer>
+                );
+                          };
+
 
 export default Footer;
