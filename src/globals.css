@@ -1,0 +1,147 @@
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+/* Custom CSS Variables */
+:root {
+  /* Typography */
+  --font-sans: 'Inter var', 'Inter', system-ui, sans-serif;
+  --font-display: 'Lexend', sans-serif;
+
+  /* Color Tokens */
+  --color-primary-50: theme('colors.primary.50');
+  --color-primary-100: theme('colors.primary.100');
+  --color-primary-500: theme('colors.primary.500');
+  --color-primary-900: theme('colors.primary.900');
+
+  --color-secondary-50: theme('colors.secondary.50');
+  --color-secondary-100: theme('colors.secondary.100');
+  --color-secondary-500: theme('colors.secondary.500');
+  --color-secondary-900: theme('colors.secondary.900');
+
+  --color-accent-50: theme('colors.accent.50');
+  --color-accent-100: theme('colors.accent.100');
+  --color-accent-500: theme('colors.accent.500');
+  --color-accent-900: theme('colors.accent.900');
+
+  /* Prose Variables */
+  --tw-prose-body: theme('colors.secondary.700');
+  --tw-prose-headings: theme('colors.secondary.900');
+  --tw-prose-lead: theme('colors.secondary.600');
+  --tw-prose-links: theme('colors.primary.600');
+  --tw-prose-bold: theme('colors.secondary.900');
+  --tw-prose-counters: theme('colors.secondary.500');
+  --tw-prose-bullets: theme('colors.secondary.300');
+  --tw-prose-hr: theme('colors.secondary.200');
+  --tw-prose-quotes: theme('colors.secondary.900');
+  --tw-prose-quote-borders: theme('colors.secondary.300');
+  --tw-prose-captions: theme('colors.secondary.500');
+  --tw-prose-code: theme('colors.secondary.900');
+  --tw-prose-pre-code: theme('colors.secondary.100');
+  --tw-prose-pre-bg: theme('colors.secondary.950');
+  --tw-prose-th-borders: theme('colors.secondary.300');
+  --tw-prose-td-borders: theme('colors.secondary.200');
+}
+
+/* Dark Mode Selector */
+.dark {
+  color-scheme: dark;
+  
+  /* Dark mode color adjustments */
+  --tw-prose-body: theme('colors.secondary.300');
+  --tw-prose-headings: theme('colors.secondary.50');
+  --tw-prose-lead: theme('colors.secondary.400');
+  --tw-prose-links: theme('colors.primary.400');
+  --tw-prose-bold: theme('colors.secondary.50');
+  --tw-prose-counters: theme('colors.secondary.400');
+  --tw-prose-bullets: theme('colors.secondary.600');
+  --tw-prose-hr: theme('colors.secondary.700');
+  --tw-prose-quotes: theme('colors.secondary.50');
+  --tw-prose-quote-borders: theme('colors.secondary.600');
+  --tw-prose-captions: theme('colors.secondary.400');
+  --tw-prose-code: theme('colors.secondary.50');
+  --tw-prose-pre-code: theme('colors.secondary.300');
+  --tw-prose-pre-bg: theme('colors.secondary.950');
+  --tw-prose-th-borders: theme('colors.secondary.600');
+  --tw-prose-td-borders: theme('colors.secondary.700');
+}
+
+/* Global Base Styles */
+html,
+body {
+  @apply scroll-smooth antialiased;
+  font-family: var(--font-sans);
+  scroll-behavior: smooth;
+}
+
+/* Custom Typography */
+.text-display {
+  font-family: var(--font-display);
+}
+
+/* Custom Utility Classes */
+.prose-custom {
+  @apply prose dark:prose-invert prose-primary max-w-none;
+}
+
+/* Accessibility Enhancements */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Smooth Scrolling for Anchor Links */
+html {
+  scroll-padding-top: 4rem;
+}
+
+/* Custom Focus Styles */
+*:focus-visible {
+  @apply outline-2 outline-primary-500 outline-offset-2;
+}
+
+/* Scrollbar Styling (Webkit Browsers) */
+::-webkit-scrollbar {
+  @apply w-2 bg-secondary-100 dark:bg-secondary-900;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-primary-300 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-primary-400;
+}
+
+/* Additional Animation Utilities */
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.5s ease-out;
+}
+
+.animate-slide-down {
+  animation: slideDown 0.5s ease-out;
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.5s ease-out;
+}
+
+/* Optional: Form Inputs Global Style */
+input, 
+textarea, 
+select {
+  @apply border-secondary-300 focus:border-primary-500 focus:ring-primary-500;
+}
+
+/* Optional: Button Reset */
+.btn-reset {
+  @apply appearance-none bg-transparent border-none cursor-pointer;
+}

@@ -1,35 +1,67 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { lazy, Suspense } from 'react'
+import { 
+  createBrowserRouter, 
+  RouterProvider, 
+  useRouteError, 
+  Outlet
+} from 'react-router-dom'
+
+import ProtectedRoute from '@/components/ProtectedRoute'
+import Layout from '@/components/layout/Layout'
+
+// Error Boundary component
+function ErrorBoundary() {
+  const error = useRouteError();
+  return (
+    <div className="error-container">
+      <h2>Oops! Something went wrong</h2>
+      <p>{error.message || 'An unexpected error occurred'}</p>
+    </div>
+  );
+}
+
+// Lazy-loaded pages with Suspense wrappers
+const Home = lazy(() => import('./pages/home/Home'))
+const Deals = lazy(() => import('./pages/deals/Deals'))
+const DealDetail = lazy(() => import('./pages/deals/DealDetail'))
+const Shops = lazy(() => import('./pages/shops/Shops'))
+const ShopDetail = lazy(() => import('./pages/shops/ShopDetail'))
+const Dashboard = lazy(() => import('./pages/dashboard/Dashboard'))
+const NotFound = lazy(() => import('./pages/NotFound'))
+
+// Create the router configuration
+const router = createBrowserRouter([
+  {
+    path: "/",
+    element: (
+      <Layout>
+        <Suspense fallback={<div>Loading...</div>}>
+          <Outlet />
+        </Suspense>
+      </Layout>
+    ),
+    errorElement: <ErrorBoundary />,
+    children: [
+      { index: true, element: <Home /> },
+      { path: "deals", element: <Deals /> },
+      { path: "deals/:id", element: <DealDetail /> },
+      { path: "shops", element: <Shops /> },
+      { path: "shops/:id", element: <ShopDetail /> },
+      { 
+        path: "dashboard/*", 
+        element: (
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        )
+      },
+      { path: "*", element: <NotFound /> }
+    ]
+  }
+]);
 
 function App() {
-  const [count, setCount] = useState(0)
-
-  return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+  return <RouterProvider router={router} />;
 }
 
 export default App
