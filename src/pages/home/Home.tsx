@@ -1,4 +1,3 @@
-// pages/home/Home.tsx
 import React, { useEffect, lazy, Suspense } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -30,7 +29,15 @@ const HomePage: React.FC = () => {
   };
 
   return (
-    <main>
+    <main className="relative">
+      {/* Gradient background - using opacity-[0.3] for better visibility of the greenish tone */}
+      <div 
+        className="absolute inset-0 -z-10 opacity-[0.3]"
+        style={{
+          background: 'linear-gradient(135deg, var(--hero-gradient-from), var(--hero-gradient-to))'
+        }}
+      ></div>
+      
       {/* Critical sections loaded immediately */}
       <HeroSection />
       <TrendingDealsSection />

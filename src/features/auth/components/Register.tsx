@@ -1,56 +1,88 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
 import { useAuth } from '@/features/auth/hooks/useAuth';
-import { RegisterForm } from '@/components/forms/RegisterForm';
-import { ErrorMessage } from '@/components/forms/ErrorMessage';
+import RegisterForm from '@/components/forms/RegisterForm';
 
-export default function Register() {
-    const { register, isLoading, error } = useAuth();
-    const navigate = useNavigate();
-    const [formData, setFormData] = useState({
-        email: '',
-        password: '',
-        password_confirm: '',
-        first_name: '',
-        last_name: '',
-    });
-
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
-    };
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        try {
-            await register(formData);
-            navigate('/dashboard'); // Redirect to dashboard or any other page
-        } catch (error) {
-            // Error handling is done in the auth context
-        }
-    };
-
-    return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-            <div className="max-w-md w-full space-y-8">
-                <div>
-                    <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-                        Create an account
-                    </h2>
-                </div>
-                
-                {error && <ErrorMessage message={error.message} />}
-                
-                <RegisterForm 
-                    formData={formData} 
-                    handleChange={handleChange} 
-                    handleSubmit={handleSubmit} 
-                    isLoading={isLoading} 
-                />
-                
-                <div className="text-sm text-center"></div>
-                    Already have an account? <Link to="/login" className="font-medium text-indigo-600 hover:text-indigo-500">Sign in</Link>
-                </div>
-            </div>        
-    );
+interface RegisterProps {
+  onClose: () => void;
+  onSwitchToLogin: () => void;
 }
+
+const Register: React.FC<RegisterProps> = ({ onClose, onSwitchToLogin }) => {
+  const { register } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+    password_confirm: '',
+    first_name: '',
+    last_name: ''
+  });
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Basic validation
+    if (formData.password !== formData.password_confirm) {
+      setError('Passwords do not match');
+      return;
+    }
+    
+    try {
+      setIsLoading(true);
+      setError(null);
+      await register(formData);
+      onClose();
+      // Could redirect to verification page or show success message
+    } catch (err: any) {
+      setError(err.message || 'Failed to create account. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleSignup = async () => {
+    try {
+      setIsLoading(true);
+      // In a real implementation, this would redirect to Google OAuth
+      window.location.href = '/api/v1/auth/google/';
+    } catch (error) {
+      setIsLoading(false);
+      console.error('Google signup error:', error);
+    }
+  };
+
+  const handleSwitchToLogin = () => {
+    onClose(); // Close register modal
+    onSwitchToLogin(); // Open login modal
+  };
+
+  return (
+    <div className="p-6">
+      {error && (
+        <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-md text-red-500 text-sm">
+          {error}
+        </div>
+      )}
+      
+      <RegisterForm
+        formData={formData}
+        handleChange={handleChange}
+        handleSubmit={handleSubmit}
+        onGoogleSignup={handleGoogleSignup}
+        isLoading={isLoading}
+        onSwitchToLogin={handleSwitchToLogin}
+      />
+    </div>
+  );
+};
+
+export default Register;

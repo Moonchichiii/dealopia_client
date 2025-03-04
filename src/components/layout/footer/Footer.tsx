@@ -1,6 +1,7 @@
 import React from 'react';
 // Using non-deprecated icons
 import { MessageSquare, Share2, Image, Film } from 'lucide-react';
+import LogoButton from '@/components/buttons/LogoButton';
 
 // Define types for social links
 interface SocialLink {
@@ -42,10 +43,10 @@ const Footer: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-16 mb-16">
                     <div className="lg:col-span-1">
                         <a href="/" className="flex items-center gap-3 mb-6">
-                            <div className="w-10 h-10 bg-primary-500 rounded-md flex items-center justify-center font-bold text-xl">
-                                D
-                            </div>
-                            <div className="text-xl font-semibold text-display">Dealopia</div>
+                            
+                                <LogoButton />
+                            
+                            
                         </a>
                         <p className="text-secondary-300 text-sm mb-6 max-w-xs">
                             Dealopia connects you with the best local deals on clothes, books, wellness, and more.

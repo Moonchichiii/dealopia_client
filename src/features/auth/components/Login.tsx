@@ -1,78 +1,62 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
+import { useAuth } from '@/features/auth/hooks/useAuth';
+import LoginForm from '@/components/forms/LoginForm';
 
-interface LoginFormProps {
-    onSubmit: (email: string, password: string) => void;
-    isLoading: boolean;
+interface LoginProps {
+  onClose: () => void;
+  onSwitchToRegister: () => void;
 }
 
-export default function LoginForm({ onSubmit, isLoading }: LoginFormProps) {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
+const Login: React.FC<LoginProps> = ({ onClose, onSwitchToRegister }) => {
+  const { login } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        onSubmit(email, password);
-    };
+  const handleLoginSubmit = async (email: string, password: string) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      await login(email, password);
+      onClose();
+    } catch (err: any) {
+      setError(err.message || 'Failed to login. Please check your credentials and try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-    return (
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-            <div className="rounded-md shadow-sm -space-y-px">
-                <div>
-                    <label htmlFor="email-address" className="sr-only">
-                        Email address
-                    </label>
-                    <input
-                        id="email-address"
-                        name="email"
-                        type="email"
-                        autoComplete="email"
-                        required
-                        className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                        placeholder="Email address"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                    />
-                </div>
-                <div>
-                    <label htmlFor="password" className="sr-only">
-                        Password
-                    </label>
-                    <input
-                        id="password"
-                        name="password"
-                        type="password"
-                        autoComplete="current-password"
-                        required
-                        className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                        placeholder="Password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                    />
-                </div>
-            </div>
+  const handleGoogleLogin = async () => {
+    try {
+      setIsLoading(true);
+      // In a real implementation, this would redirect to Google OAuth
+      window.location.href = '/api/v1/auth/google/';
+    } catch (error) {
+      setIsLoading(false);
+      console.error('Google login error:', error);
+    }
+  };
 
-            <div className="flex items-center justify-between">
-                <div className="text-sm">
-                    <a href="/register" className="font-medium text-indigo-600 hover:text-indigo-500">
-                        Don't have an account? Sign up
-                    </a>
-                </div>
-                <div className="text-sm">
-                    <a href="/forgot-password" className="font-medium text-indigo-600 hover:text-indigo-500">
-                        Forgot your password?
-                    </a>
-                </div>
-            </div>
+  const handleSwitchToRegister = () => {
+    onClose(); // Close login modal
+    onSwitchToRegister(); // Open register modal
+  };
 
-            <div>
-                <button
-                    type="submit"
-                    disabled={isLoading}
-                    className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                >
-                    {isLoading ? 'Signing in...' : 'Sign in'}
-                </button>
-            </div>
-        </form>
-    );
-}
+  return (
+    <div className="p-6">
+      {error && (
+        <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-md text-red-500 text-sm">
+          {error}
+        </div>
+      )}
+      
+      <LoginForm 
+        onSubmit={handleLoginSubmit}
+        onGoogleLogin={handleGoogleLogin}
+        isLoading={isLoading}
+        onSwitchToRegister={handleSwitchToRegister}
+      />
+    </div>
+  );
+};
+
+export default Login;

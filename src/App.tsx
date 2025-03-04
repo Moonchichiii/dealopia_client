@@ -16,8 +16,6 @@ const ShopDetail = lazy(() => import('@/pages/shops/ShopDetail'));
 const Dashboard = lazy(() => import('@/pages/dashboard/Dashboard'));
 const NotFound = lazy(() => import('@/pages/notfound/NotFound'));
 
-
-
 function App() {
   const [loading, setLoading] = useState(true);
   const [progress, setProgress] = useState(0);
@@ -30,7 +28,7 @@ function App() {
         setProgress(prev => {
           const increment = Math.random() * 25; // Larger increments
           const newProgress = prev + increment;
-          
+         
           if (newProgress >= 99) {
             clearInterval(interval);
             setTimeout(() => {
@@ -39,18 +37,18 @@ function App() {
             }, 200); // Shorter delay
             return 99;
           }
-          
+         
           return newProgress;
         });
       }, 200); // Faster interval
-      
+     
       return () => clearInterval(interval);
     }
   }, [loading]);
 
-  // Show loader while initial loading
+  // Show initial loader while app is loading
   if (loading) {
-    return <Loader progress={progress} />;
+    return <Loader progress={progress} isInitial={true} />;
   }
 
   // Create the router configuration
