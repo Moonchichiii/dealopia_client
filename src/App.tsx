@@ -22,29 +22,27 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [progress, setProgress] = useState(0);
 
-  // Simulate loading progress
+  // More efficient loading simulation
   useEffect(() => {
     if (loading) {
+      // Faster loading simulation
       const interval = setInterval(() => {
         setProgress(prev => {
-          const newProgress = prev + Math.random() * 15;
+          const increment = Math.random() * 25; // Larger increments
+          const newProgress = prev + increment;
           
-          // If we've reached ~100%, complete loading
           if (newProgress >= 99) {
             clearInterval(interval);
-            
-            // Give a small delay before fully completing
             setTimeout(() => {
               setProgress(100);
-              setTimeout(() => setLoading(false), 800);
-            }, 500);
-            
+              setTimeout(() => setLoading(false), 300); // Shorter delay
+            }, 200); // Shorter delay
             return 99;
           }
           
           return newProgress;
         });
-      }, 500);
+      }, 200); // Faster interval
       
       return () => clearInterval(interval);
     }

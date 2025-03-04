@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { SectionProps } from '@/types/home';
 import { Deal } from '@/types/deals';
-import DealCard from '@/components/ui/DealCard';
+import DealCard from '@/components/cards/DealCard';
 import SectionHeading from '@/components/ui/SectionHeading';
 
 interface TrendingDealsSectionProps extends SectionProps {
@@ -53,7 +53,7 @@ export const TrendingDealsSection: React.FC<TrendingDealsSectionProps> = ({
   deals = defaultDeals,
 }) => {
   return (
-    <section className={`bg-bg-primary py-24 relative z-10 ${className}`}>
+    <section className={`trending-section bg-bg-primary py-24 relative z-10 ${className}`}>
       <div className="container mx-auto px-4">
         <SectionHeading
           title="Trending Deals"

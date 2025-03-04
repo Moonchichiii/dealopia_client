@@ -2,11 +2,13 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react-swc'
 import path from 'path'
 import { VitePWA } from 'vite-plugin-pwa'
+import tailwindcss from '@tailwindcss/vite'
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
     react(),
+    tailwindcss(), // New Tailwind CSS v4 Vite plugin
     VitePWA({
       registerType: 'autoUpdate',
       workbox: {
@@ -53,6 +55,15 @@ export default defineConfig({
     port: 5173,
     strictPort: true,
     host: true,
+    hmr: {
+      protocol: 'ws',
+      host: 'localhost',
+      port: 5173,
+      timeout: 30000,
+      clientPort: 5173,
+      path: '/ws',
+      overlay: true,
+    },
     proxy: {
       '/api': {
         target: 'http://127.0.0.1:8000',

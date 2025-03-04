@@ -1,42 +1,55 @@
-import React from 'react';
-import { Navigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useState, useEffect } from 'react';
+import { Navigate, useLocation } from 'react-router-dom';
+import apiClient, { updateAuthStatus } from '@/api/client';
+import Loader from './common/Loader';
 
-interface ProtectedRouteProps {
-    children: JSX.Element;
-}
+const ProtectedRoute = ({ children }) => {
+  const [isLoading, setIsLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const location = useLocation();
 
-// Protected Route Component
-const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-    // Use TanStack Query to check authentication status
-    const { data: user, isLoading } = useQuery({
-        queryKey: ['auth', 'currentUser'],
-        // This assumes you have an endpoint to verify the user's authentication status
-        // The HTTP-only cookie will be sent automatically with this request
-        queryFn: async () => {
-            const response = await fetch('/api/auth/me');
-            if (!response.ok) throw new Error('Not authenticated');
-            return response.json();
-        },
-        // Don't retry on 401/403 errors
-        retry: (failureCount, error: any) => {
-            if (error.message === 'Not authenticated') return false;
-            return failureCount < 3;
-        },
-    });
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        // Check if auth cookies exist first to avoid unnecessary requests
+        const cookies = document.cookie.split(';');
+        const hasAuthCookie = cookies.some(cookie => 
+          cookie.trim().startsWith('auth-token=')
+        );
+        
+        if (!hasAuthCookie) {
+          setIsAuthenticated(false);
+          updateAuthStatus(false);
+          setIsLoading(false);
+          return;
+        }
+        
+        // Only make the API call if we have an auth cookie
+        const response = await apiClient.get('/auth/me/');
+        setIsAuthenticated(true);
+        updateAuthStatus(true);
+      } catch (error) {
+        console.error('Authentication check failed:', error);
+        setIsAuthenticated(false);
+        updateAuthStatus(false);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-    // Show loading state or spinner while checking authentication
-    if (isLoading) {
-        return <div>Loading...</div>; // Consider using a proper loading component
-    }
+    checkAuth();
+  }, []);
 
-    // If we don't have a user, they're not authenticated
-    if (!user) {
-        return <Navigate to="/" replace />;
-    }
-    
-    return children;
+  if (isLoading) {
+    return <Loader size="lg" message="Verifying authentication..." />;
+  }
+
+  if (!isAuthenticated) {
+    // Redirect to login with a return path
+    return <Navigate to="/login" state={{ from: location.pathname }} replace />;
+  }
+
+  return children;
 };
 
 export default ProtectedRoute;
-  

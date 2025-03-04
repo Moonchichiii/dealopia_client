@@ -1,6 +1,6 @@
 import React from 'react';
 import { Deal } from '@/types/deals';
-import DealCard from '@/components/ui/DealCard';
+import DealCard from '@/components/cards/DealCard';
 
 interface DealsListSectionProps {
   deals?: Deal[];
