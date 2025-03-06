@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, Filter } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { Category } from '@/types/categories';
 
 interface DealsHeroSectionProps {
@@ -23,7 +23,7 @@ const DealsHeroSection: React.FC<DealsHeroSectionProps> = ({
   };
 
   return (
-    <section className="pt-32 pb-16 bg-gradient-to-br from-accent-blue/10 to-accent-pink/10">
+    <section className="pt-32 pb-16">
       <div className="container mx-auto px-4">
         <div className="text-center max-w-3xl mx-auto mb-12">
           <h1 className="text-4xl md:text-5xl font-bold mb-6">
@@ -65,15 +65,6 @@ const DealsHeroSection: React.FC<DealsHeroSectionProps> = ({
               ))}
             </div>
           )}
-        </div>
-
-        <div className="flex justify-between items-center mb-8">
-          <h2 className="text-2xl font-semibold">All Deals</h2>
-          
-          <button className="flex items-center gap-2 bg-white/5 px-4 py-2 rounded-lg hover:bg-white/10 transition-colors">
-            <Filter size={16} />
-            <span>Filter</span>
-          </button>
         </div>
       </div>
     </section>

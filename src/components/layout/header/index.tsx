@@ -1,47 +1,45 @@
-import React, { useRef, useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { gsap } from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { Menu, X } from 'lucide-react'; 
-
-// Register ScrollTrigger with GSAP
-gsap.registerPlugin(ScrollTrigger);
-
-import LogoButton from '@/components/buttons/LogoButton';
-import { LanguageSwitcher } from '@/components/languageswitcher/LanguageSwitcher';
-import MobileMenu from './MobileMenu';
+import React, { useState } from 'react';
+import { useLocation } from 'react-router-dom';
+import { Menu } from 'lucide-react';
+// Import hook
+import { useHeaderScroll } from '@/hooks/useHeaderScroll';
+// Import components
 import HeaderNavLinks from './HeaderNavLinks';
-import AuthButtons from './AuthButtons';
 import HeaderSearch from './HeaderSearch';
 import ThemeToggle from './ThemeToggle';
+import AuthButtons from './AuthButtons';
+import MobileMenu from './MobileMenu';
+import AuthModal from './AuthModal';
 import UserMenu from './UserMenu';
-import { AuthModal } from './AuthModal';
-
+// Define navigation links interface
 export interface NavLink {
   name: string;
   path: string;
 }
-
-export const Header: React.FC = () => {
-  const [isOpen, setIsOpen] = useState<boolean>(false);
-  const [loginOpen, setLoginOpen] = useState<boolean>(false);
-  const [registerOpen, setRegisterOpen] = useState<boolean>(false);
-  const [currentPath, setCurrentPath] = useState<string>(window.location.pathname);
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
-
-  const headerRef = useRef<HTMLElement>(null);
-  const mobileNavRef = useRef<HTMLDivElement>(null);
-  const overlayRef = useRef<HTMLDivElement>(null);
+const Header: React.FC = () => {
+  // Use our custom header scroll hook
+  const headerRef = useHeaderScroll();
   
-  // Mock user data - in reality, this would come from your auth context
-  const userData = {
-    id: '123',
-    firstName: 'John',
-    lastName: 'Doe',
-    email: 'john.doe@example.com',
-    avatar: undefined
-  };
-
+  // State for mobile menu
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  
+  // State for auth modals
+  const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const [isRegisterOpen, setIsRegisterOpen] = useState(false);
+  
+  // Refs for mobile menu animation
+  const mobileNavRef = React.useRef<HTMLDivElement>(null);
+  const overlayRef = React.useRef<HTMLDivElement>(null);
+  
+  // User authentication state (mock for now)
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userData, setUserData] = useState(null);
+  
+  // Get current location for active nav highlighting
+  const location = useLocation();
+  const currentPath = location.pathname;
+  
+  // Define navigation links
   const navLinks: NavLink[] = [
     { name: 'Home', path: '/' },
     { name: 'Deals', path: '/deals' },
@@ -49,117 +47,61 @@ export const Header: React.FC = () => {
     { name: 'Shops', path: '/shops' },
     { name: 'About', path: '/about' },
   ];
-
+  // Handle auth modal functions
+  const handleLoginClick = () => {
+    setIsLoginOpen(true);
+    setIsRegisterOpen(false);
+    setIsMobileMenuOpen(false);
+  };
+  const handleRegisterClick = () => {
+    setIsRegisterOpen(true);
+    setIsLoginOpen(false);
+    setIsMobileMenuOpen(false);
+  };
+  const handleSwitchToRegister = () => {
+    setIsLoginOpen(false);
+    setIsRegisterOpen(true);
+  };
+  const handleSwitchToLogin = () => {
+    setIsRegisterOpen(false);
+    setIsLoginOpen(true);
+  };
   // Mock logout function
   const handleLogout = () => {
     setIsLoggedIn(false);
+    setUserData(null);
   };
-
-  // Handle auth button clicks
-  const handleLoginClick = () => {
-    setLoginOpen(true);
-  };
-  
-  const handleRegisterClick = () => {
-    setRegisterOpen(true);
-  };
-
-  // Handle switching between login and register modals
-  const handleSwitchToRegister = () => {
-    setLoginOpen(false);
-    setRegisterOpen(true);
-  };
-
-  const handleSwitchToLogin = () => {
-    setRegisterOpen(false);
-    setLoginOpen(true);
-  };
-
-  // Listen for route changes
-  useEffect(() => {
-    const handleLocationChange = (): void => {
-      setCurrentPath(window.location.pathname);
-    };
-
-    window.addEventListener('popstate', handleLocationChange);
-    return () => window.removeEventListener('popstate', handleLocationChange);
-  }, []);
-
-  // Toggle mobile menu
-  const toggleMenu = (): void => {
-    setIsOpen(!isOpen);
-  };
-
-  // Header scroll animation for sticky behavior
-  useEffect(() => {
-    const header = headerRef.current;
-    if (!header) return;
-
-    // Set initial state
-    gsap.set(header, {
-      backgroundColor: 'transparent',
-      backdropFilter: 'none',
-      boxShadow: 'none',
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      width: '100%'
-    });
-
-    const scrollTrigger = ScrollTrigger.create({
-      start: 'top top',
-      end: '+=100',
-      toggleClass: { className: 'header-scrolled', targets: header },
-      onUpdate: (self): void => {
-        // Transform it on scroll
-        gsap.to(header, {
-          backgroundColor: self.progress > 0 ? 'var(--color-bg-secondary)' : 'transparent',
-          boxShadow: self.progress > 0 ? '0 5px 20px rgba(0, 0, 0, 0.2)' : 'none',
-          backdropFilter: self.progress > 0 ? 'blur(10px)' : 'none',
-          padding: self.progress > 0 ? '15px 0' : '40px 0',
-          duration: 0.3,
-          ease: 'power2.out'
-        });
-      }
-    });
-
-    return () => {
-      scrollTrigger.kill();
-    };
-  }, []);
-
-  // Close menu when path changes
-  useEffect(() => {
-    if (isOpen) {
-      toggleMenu();
-    }
-  }, [currentPath]);
-
   return (
     <>
-      <header
+      <header 
         ref={headerRef}
-        className="fixed top-0 left-0 w-full z-[1000] transition-all duration-300 py-10 bg-transparent"
+        className="fixed top-0 left-0 w-full z-150 transition-all duration-300"
       >
-        <div className="container mx-auto px-5 md:px-10 flex justify-between items-center">
-          <Link to="/" className="flex items-center gap-3 text-[color:var(--color-text-primary)] no-underline flex-shrink-0">
-            <LogoButton showText={false} />
-            <div className="text-xl font-semibold tracking-tight">Dealopia</div>
-          </Link>
+        <div className="container mx-auto px-4 md:px-8 flex items-center justify-between h-full">
+          {/* Logo */}
+          <a href="/" className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-[var(--accent-pink)] rounded-md flex items-center justify-center text-white font-bold text-lg">
+              D
+            </div>
+            <div className="text-[color:var(--color-text-primary)] text-xl font-semibold tracking-tight">
+              Dealopia
+            </div>
+          </a>
 
-          <nav className="hidden md:flex items-center justify-between flex-1 max-w-4xl ml-8">
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center">
             <HeaderNavLinks navLinks={navLinks} currentPath={currentPath} />
+          </div>
 
-            <div className="flex items-center gap-4">
-              <HeaderSearch />
-              <ThemeToggle />
-              <LanguageSwitcher />
-              
-              {isLoggedIn ? (
-                <UserMenu
-                  user={userData}
-                  onLogout={handleLogout}
-                />
+          {/* Right Section: Search, Theme Toggle, Auth */}
+          <div className="flex items-center gap-2 md:gap-4">
+            <HeaderSearch className="hidden md:block" />
+            <ThemeToggle />
+            
+            {/* User Menu or Auth Buttons */}
+            <div className="hidden md:block">
+              {isLoggedIn && userData ? (
+                <UserMenu user={userData} onLogout={handleLogout} />
               ) : (
                 <AuthButtons
                   onLoginClick={handleLoginClick}
@@ -167,30 +109,25 @@ export const Header: React.FC = () => {
                 />
               )}
             </div>
-          </nav>
 
-          {/* Mobile menu toggle button - Shows X when menu is open, Menu icon when closed */}
-          <button
-            type="button"
-            className="md:hidden text-[color:var(--color-text-primary)] bg-transparent border-none flex items-center justify-center transition-opacity duration-200"
-            onClick={toggleMenu}
-            aria-label={isOpen ? "Close Menu" : "Open Menu"}
-          >
-            {isOpen ? (
-              <X size={24} className="animate-fadeIn" />
-            ) : (
-              <Menu size={24} className="animate-fadeIn" />
-            )}
-          </button>
+            {/* Mobile Menu Toggle */}
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="md:hidden p-2 text-[color:var(--color-text-primary)] rounded-full hover:bg-white/5"
+              aria-label="Toggle mobile menu"
+            >
+              <Menu size={24} />
+            </button>
+          </div>
         </div>
       </header>
 
-      {/* Mobile Navigation */}
+      {/* Mobile Menu (Portal) */}
       <MobileMenu
-        isOpen={isOpen}
+        isOpen={isMobileMenuOpen}
         navLinks={navLinks}
         currentPath={currentPath}
-        onClose={toggleMenu}
+        onClose={() => setIsMobileMenuOpen(false)}
         onLoginClick={handleLoginClick}
         onRegisterClick={handleRegisterClick}
         mobileNavRef={mobileNavRef}
@@ -200,12 +137,12 @@ export const Header: React.FC = () => {
         onLogout={handleLogout}
       />
 
-      {/* Auth modals */}
+      {/* Auth Modals */}
       <AuthModal
-        isLoginOpen={loginOpen}
-        isRegisterOpen={registerOpen}
-        onLoginClose={() => setLoginOpen(false)}
-        onRegisterClose={() => setRegisterOpen(false)}
+        isLoginOpen={isLoginOpen}
+        isRegisterOpen={isRegisterOpen}
+        onLoginClose={() => setIsLoginOpen(false)}
+        onRegisterClose={() => setIsRegisterOpen(false)}
         onSwitchToRegister={handleSwitchToRegister}
         onSwitchToLogin={handleSwitchToLogin}
       />

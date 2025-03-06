@@ -8,7 +8,7 @@ import TrendingDealsSection from '@/sections/home/TrendingDealsSection';
 
 // Lazy load less critical sections
 const FeaturedShopsSection = lazy(() => import('@/sections/common/FeaturedShopsSection'));
-const NewsletterSection = lazy(() => import('@/sections/common/NewsletterSection'));
+const NewsletterSection = lazy(() => import('@/Sections/common/NewsletterSection'));
 
 const HomePage: React.FC = () => {
   // Set up GSAP

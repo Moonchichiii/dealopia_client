@@ -41,7 +41,7 @@ const LogoButton: React.FC<LogoButtonProps> = ({
       <div className={logoMarkClasses}>D</div>
       
       {showText && (variant === 'full' || (variant === 'responsive' && size !== 'sm')) && (
-        <div className={`font-semibold tracking-tight ${textSizeClasses[size]} hidden sm:block`}>
+        <div className={`mr-5 font-semibold tracking-tight ${textSizeClasses[size]} hidden sm:block`}>
           Dealopia
         </div>
       )}

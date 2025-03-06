@@ -1,76 +1,80 @@
 import apiClient from '../client';
-import { UserProfile, LoginCredentials, RegisterData } from '@types/auth';
+import { LoginCredentials, RegisterData, UserProfile, AuthTokens } from '@/types/auth';
 
 /**
- * Auth API service for authentication operations
+ * Service for authentication-related API calls
  */
 export const authApi = {
   /**
-   * Login with email/username and password
+   * Login with email and password
    */
-  login: async (credentials: LoginCredentials) => {
-    const { data } = await apiClient.post('/auth/login/', credentials);
-    return data;
+  async login(credentials: LoginCredentials): Promise<void> {
+    const response = await apiClient.post('/auth/login/', credentials);
+    return response.data;
   },
 
   /**
    * Register a new user
    */
-  register: async (userData: RegisterData) => {
-    const { data } = await apiClient.post('/auth/registration/', userData);
-    return data;
+  async register(userData: RegisterData): Promise<void> {
+    const response = await apiClient.post('/auth/registration/', userData);
+    return response.data;
   },
 
   /**
-   * Get current user profile
+   * Log out the current user
    */
-  getProfile: async (): Promise<UserProfile> => {
-    const { data } = await apiClient.get('/auth/me/');
-    return data;
+  async logout(): Promise<void> {
+    await apiClient.post('/auth/logout/');
   },
 
   /**
-   * Update user profile
+   * Get the current user's profile
    */
-  updateProfile: async (profileData: Partial<UserProfile>) => {
-    const { data } = await apiClient.patch('/users/update_profile/', profileData);
-    return data;
+  async getProfile(): Promise<UserProfile> {
+    const response = await apiClient.get('/auth/me/');
+    return response.data;
+  },
+
+  /**
+   * Update the current user's profile
+   */
+  async updateProfile(profileData: Partial<UserProfile>): Promise<UserProfile> {
+    const response = await apiClient.patch('/auth/me/', profileData);
+    return response.data;
+  },
+
+  /**
+   * Verify email with confirmation key
+   */
+  async verifyEmail(key: string): Promise<void> {
+    await apiClient.post('/auth/registration/verify-email/', { key });
   },
 
   /**
    * Request password reset
    */
-  requestPasswordReset: async (email: string) => {
-    const { data } = await apiClient.post('/auth/password/reset/', { email });
-    return data;
+  async requestPasswordReset(email: string): Promise<void> {
+    await apiClient.post('/auth/password/reset/', { email });
   },
 
   /**
-   * Confirm password reset
+   * Confirm password reset with token
    */
-  confirmPasswordReset: async (uid: string, token: string, newPassword: string) => {
-    const { data } = await apiClient.post('/auth/password/reset/confirm/', {
+  async confirmPasswordReset(uid: string, token: string, new_password1: string, new_password2: string): Promise<void> {
+    await apiClient.post('/auth/password/reset/confirm/', {
       uid,
       token,
-      new_password1: newPassword,
-      new_password2: newPassword,
+      new_password1,
+      new_password2
     });
-    return data;
   },
 
   /**
-   * Verify email address
+   * Refresh the authentication token
    */
-  verifyEmail: async (key: string) => {
-    const { data } = await apiClient.post('/auth/registration/verify-email/', { key });
-    return data;
-  },
-
-  /**
-   * Logout user (invalidate token)
-   */
-  logout: async () => {
-    const { data } = await apiClient.post('/auth/logout/');
-    return data;
-  },
+  async refreshToken(refresh: string): Promise<AuthTokens> {
+    const response = await apiClient.post('/auth/token/refresh/', { refresh });
+    return response.data;
+  }
 };

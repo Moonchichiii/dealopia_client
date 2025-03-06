@@ -13,22 +13,15 @@ const NewsletterSection = lazy(() => import('@/sections/common/NewsletterSection
 import { Deal } from '@/types/deals';
 import { Category } from '@/types/categories';
 
-// In a real app, import your API services
-// import { dealsApi } from '@/services/api/deals';
-// import { categoriesApi } from '@/services/api/categories';
-
 const DealsPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const searchQuery = searchParams.get('q') || '';
   const categoryId = searchParams.get('category') || '';
   
-  // Fetch categories for filters
-  const { data: categories } = useQuery({
+  // Fetch categories for filters - Fixed with proper queryFn
+  const { data: categories = [] } = useQuery({
     queryKey: ['categories'],
     queryFn: async () => {
-      // In a real app, call your API
-      // return categoriesApi.getCategories();
-      
       // Mock data for demonstration
       await new Promise(resolve => setTimeout(resolve, 500));
       return [
@@ -39,9 +32,17 @@ const DealsPage: React.FC = () => {
         { id: 5, name: 'Entertainment' }
       ] as Category[];
     },
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
   
-  // Fetch deals with infinite loading
+  // Define the response type for pagination
+  type DealsResponse = {
+    deals: Deal[];
+    currentPage: number;
+    totalPages: number;
+  };
+
+  // Fetch deals with infinite loading - Fixed with proper queryFn
   const {
     data,
     fetchNextPage,
@@ -51,13 +52,6 @@ const DealsPage: React.FC = () => {
   } = useInfiniteQuery({
     queryKey: ['deals', searchQuery, categoryId],
     queryFn: async ({ pageParam = 1 }) => {
-      // In a real app, call your API with pagination
-      // return dealsApi.getDeals({ 
-      //   search: searchQuery, 
-      //   category: categoryId, 
-      //   page: pageParam 
-      // });
-      
       // Mock data for demonstration
       await new Promise(resolve => setTimeout(resolve, 800));
       
@@ -81,7 +75,7 @@ const DealsPage: React.FC = () => {
         tag: i % 3 === 0 ? 'Popular' : i % 3 === 1 ? 'New' : 'Hot',
         views_count: Math.floor(Math.random() * 1000),
         clicks_count: Math.floor(Math.random() * 500),
-      })) as unknown as Deal[];
+      })) as Deal[];
       
       return {
         deals: mockDeals,
@@ -89,6 +83,7 @@ const DealsPage: React.FC = () => {
         totalPages: 3, // Mock having 3 pages total
       };
     },
+    initialPageParam: 1,
     getNextPageParam: (lastPage) => {
       if (lastPage.currentPage < lastPage.totalPages) {
         return lastPage.currentPage + 1;
@@ -111,24 +106,66 @@ const DealsPage: React.FC = () => {
     setSearchParams(newParams);
   };
 
+  // Handle newsletter submission
+  const handleNewsletterSubmit = async (email: string): Promise<void> => {
+    console.log(`Subscribing ${email} to newsletter`);
+    await new Promise(resolve => setTimeout(resolve, 1500));
+  };
+
   return (
-    <main>
-      <DealsHeroSection 
-        categories={categories} 
-        onSearch={handleSearch}
-        initialSearchQuery={searchQuery}
-      />
+    <main className="relative min-h-screen w-full">
+      {/* Gradient background filling entire page */}
+      <div 
+        className="absolute inset-0 -z-10 opacity-[0.3]"
+        style={{
+          background: 'linear-gradient(135deg, var(--hero-gradient-from), var(--hero-gradient-to))'
+        }}
+      ></div>
       
-      <DealsListSection 
-        deals={deals}
-        isLoading={isLoading || isFetchingNextPage}
-        onLoadMore={() => fetchNextPage()}
-        hasMore={!!hasNextPage}
-      />
+      {/* Hero section with search and filters */}
+      <div className="py-16 md:py-24 w-full">
+        <div className="container mx-auto px-4 max-w-6xl">
+          <DealsHeroSection 
+            categories={categories} 
+            onSearch={handleSearch}
+            initialSearchQuery={searchQuery}
+          />
+        </div>
+      </div>
       
-      <Suspense fallback={<div className="h-64 flex items-center justify-center">Loading...</div>}>
-        <NewsletterSection />
-      </Suspense>
+      {/* List section title and filter - centralized content */}
+      <div className="w-full">
+        <div className="container mx-auto px-4 mb-8 max-w-6xl">
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl md:text-3xl font-bold text-white">All Deals</h2>
+            <button className="bg-black/20 hover:bg-black/30 text-white px-4 py-2 rounded-full flex items-center gap-2 transition-colors">
+              <span>Filter</span>
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      {/* Deals list cards in container - centralized content */}
+      <div className="w-full">
+        <div className="container mx-auto px-4 mb-16 max-w-6xl">
+          <DealsListSection 
+            deals={deals}
+            isLoading={isLoading || isFetchingNextPage}
+            onLoadMore={() => fetchNextPage()}
+            hasMore={!!hasNextPage}
+          />
+        </div>
+      </div>
+      
+      {/* Newsletter section - full width but content centralized */}
+      <div className="w-full">
+        <Suspense fallback={<div className="h-64 flex items-center justify-center">Loading...</div>}>
+          <NewsletterSection onSubmit={handleNewsletterSubmit} />
+        </Suspense>
+      </div>
     </main>
   );
 };
