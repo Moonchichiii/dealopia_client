@@ -1,7 +1,7 @@
 import { Suspense, useEffect, useState, useRef } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import Header from '@/components/layout/header/index';
-import Footer from '@/components/layout/footer/Footer';
+import Footer from '@/components/layout/Footer';
 import Loader from '@/components/common/Loader';
 import LandingPage from '@/pages/landing/Landing';
 

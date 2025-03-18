@@ -2,7 +2,7 @@ import { useLayoutEffect, useRef } from 'react';
 import { gsap, ScrollSmoother, ScrollTrigger } from '@/utils/gsap';
 import { useAuth } from '@/features/auth/contexts/AuthContext';
 import { Header } from '@/components/layout/header';
-import { Footer } from '@/components/layout/footer/Footer';
+import { Footer } from '@/components/layout/Footer';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 //import { useTranslation } from 'react-i18next';
 

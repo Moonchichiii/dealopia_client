@@ -14,7 +14,7 @@ interface RelatedDealsSectionProps {
 const RelatedDealsSection: React.FC<RelatedDealsSectionProps> = ({
   categoryId,
   dealId,
-  limit = 3
+  limit = 3 
 }) => {
   // Fetch related deals
   const { data: relatedDeals, isLoading } = useQuery({

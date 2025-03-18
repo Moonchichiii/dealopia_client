@@ -146,7 +146,7 @@ const HeroSection: React.FC<HeroSectionProps> = () => {
       </div>
       
       {/* Wave Divider */}
-      <svg className="absolute bottom-0 left-0 w-full h-20 text-black" preserveAspectRatio="none" viewBox="0 0 1440 320">
+      <svg className="absolute bottom-0 left-0 w-full h-40 text-black" preserveAspectRatio="none" viewBox="0 0 1440 320">
         <path 
           fill="#1A1727" 
           fillOpacity="1" 

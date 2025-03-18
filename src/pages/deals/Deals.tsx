@@ -1,4 +1,4 @@
-import React, { useEffect, useState, lazy, Suspense } from 'react';
+import React, { lazy, Suspense } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
 
@@ -18,7 +18,7 @@ const DealsPage: React.FC = () => {
   const searchQuery = searchParams.get('q') || '';
   const categoryId = searchParams.get('category') || '';
   
-  // Fetch categories for filters - Fixed with proper queryFn
+  // Fetch categories for filters
   const { data: categories = [] } = useQuery({
     queryKey: ['categories'],
     queryFn: async () => {
@@ -35,14 +35,7 @@ const DealsPage: React.FC = () => {
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
   
-  // Define the response type for pagination
-  type DealsResponse = {
-    deals: Deal[];
-    currentPage: number;
-    totalPages: number;
-  };
-
-  // Fetch deals with infinite loading - Fixed with proper queryFn
+  // Fetch deals with infinite loading
   const {
     data,
     fetchNextPage,
@@ -95,14 +88,24 @@ const DealsPage: React.FC = () => {
   // Flatten deals from all pages
   const deals = data?.pages.flatMap(page => page.deals) || [];
   
-  // Handle search query change
-  const handleSearch = (query: string) => {
+  // Handle search query and filter changes
+  const handleSearch = (query: string, filters?: Record<string, any>) => {
     const newParams = new URLSearchParams(searchParams);
+    
+    // Update search query
     if (query) {
       newParams.set('q', query);
     } else {
       newParams.delete('q');
     }
+    
+    // Update category filter
+    if (filters?.categories?.length) {
+      newParams.set('category', filters.categories[0].toString());
+    } else {
+      newParams.delete('category');
+    }
+    
     setSearchParams(newParams);
   };
 
@@ -114,7 +117,7 @@ const DealsPage: React.FC = () => {
 
   return (
     <main className="relative min-h-screen w-full">
-      {/* Gradient background filling entire page */}
+      {/* Gradient background */}
       <div 
         className="absolute inset-0 -z-10 opacity-[0.3]"
         style={{
@@ -133,22 +136,23 @@ const DealsPage: React.FC = () => {
         </div>
       </div>
       
-      {/* List section title and filter - centralized content */}
+      {/* List section title */}
       <div className="w-full">
         <div className="container mx-auto px-4 mb-8 max-w-6xl">
           <div className="flex items-center justify-between">
-            <h2 className="text-2xl md:text-3xl font-bold text-white">All Deals</h2>
-            <button className="bg-black/20 hover:bg-black/30 text-white px-4 py-2 rounded-full flex items-center gap-2 transition-colors">
-              <span>Filter</span>
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
-              </svg>
-            </button>
+            <h2 className="text-2xl md:text-3xl font-bold text-white">
+              {searchQuery ? `Results for "${searchQuery}"` : "All Deals"}
+            </h2>
+            {deals.length > 0 && (
+              <div className="text-text-secondary">
+                {deals.length} {deals.length === 1 ? 'deal' : 'deals'} found
+              </div>
+            )}
           </div>
         </div>
       </div>
       
-      {/* Deals list cards in container - centralized content */}
+      {/* Deals list section */}
       <div className="w-full">
         <div className="container mx-auto px-4 mb-16 max-w-6xl">
           <DealsListSection 
@@ -160,7 +164,7 @@ const DealsPage: React.FC = () => {
         </div>
       </div>
       
-      {/* Newsletter section - full width but content centralized */}
+      {/* Newsletter section */}
       <div className="w-full">
         <Suspense fallback={<div className="h-64 flex items-center justify-center">Loading...</div>}>
           <NewsletterSection onSubmit={handleNewsletterSubmit} />
