@@ -6,10 +6,12 @@ export interface Deal {
   title: string;
   shop: number;
   shop_name: string;
+  shop_logo?: string;
   description: string;
   original_price: number;
   discounted_price: number;
   discount_percentage: number;
+  discount_amount?: number;
   categories: number[];
   category_names: string[];
   image: string;
@@ -18,6 +20,8 @@ export interface Deal {
   is_featured: boolean;
   is_exclusive: boolean;
   is_verified: boolean;
+  time_left?: string;
+  is_new?: boolean;
   terms_and_conditions: string;
   coupon_code: string;
   redemption_link: string;

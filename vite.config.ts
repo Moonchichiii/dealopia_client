@@ -8,14 +8,14 @@ import tailwindcss from '@tailwindcss/vite'
 export default defineConfig({
   plugins: [
     react(),
-    tailwindcss(), // New Tailwind CSS v4 Vite plugin
+    tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
       workbox: {
         cleanupOutdatedCaches: true,
         skipWaiting: true,
         clientsClaim: true,
-        maximumFileSizeToCacheInBytes: 3000000, // 3MB limit to avoid memory issues
+        maximumFileSizeToCacheInBytes: 3000000,
       },
       manifest: {
         name: 'Dealopia',
@@ -117,7 +117,7 @@ export default defineConfig({
     target: 'esnext',
     minify: 'esbuild',
     cssMinify: 'lightningcss',
-    reportCompressedSize: false, // Speeds up build
+    reportCompressedSize: false,
     rollupOptions: {
       output: {
         manualChunks: {
@@ -133,7 +133,7 @@ export default defineConfig({
     },
     sourcemap: true,
     chunkSizeWarningLimit: 1000,
-    assetsInlineLimit: 4096, // Inline small assets as base64
+    assetsInlineLimit: 4096,
   },
   optimizeDeps: {
     include: [

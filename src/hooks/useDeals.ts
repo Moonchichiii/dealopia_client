@@ -1,150 +1,197 @@
 import { 
-    useQuery, 
-    useInfiniteQuery, 
-    useMutation, 
-    useQueryClient 
-  } from '@tanstack/react-query';
-  import { dealsApi } from '@/services/api/deals';
-  import { Deal, DealParams } from '@/types/deal';
-  import { toast } from 'react-toastify';
+  useQuery, 
+  useInfiniteQuery, 
+  useMutation, 
+  useQueryClient 
+} from '@tanstack/react-query';
+import { dealsApi } from '@/api';
+import { Deal, DealFilters } from '@/types/deals';
+import { toast } from 'react-toastify';
+
+/**
+ * Hook for fetching a paginated list of deals with filters
+ */
+export const useDeals = (params?: DealFilters) => {
+  return useQuery({
+    queryKey: ['deals', params],
+    queryFn: () => dealsApi.getDeals(params),
+    keepPreviousData: true,
+  });
+};
+
+/**
+ * Hook for fetching an infinite scrolling list of deals
+ */
+export const useInfiniteDeals = (filters?: DealFilters) => {
+  return useInfiniteQuery({
+    queryKey: ['deals', 'infinite', filters],
+    queryFn: async ({ pageParam = 1 }) => {
+      const response = await dealsApi.getDeals({
+        ...filters,
+        page: pageParam,
+      });
+      return {
+        deals: response.results,
+        currentPage: pageParam,
+        totalPages: Math.ceil(response.count / (filters?.page_size || 20)),
+      };
+    },
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => {
+      if (lastPage.currentPage < lastPage.totalPages) {
+        return lastPage.currentPage + 1;
+      }
+      return undefined;
+    },
+  });
+};
+
+/**
+ * Hook for fetching a single deal by ID
+ */
+export const useDeal = (id?: string) => {
+  return useQuery({
+    queryKey: ['deal', id],
+    queryFn: () => dealsApi.getDeal(id!),
+    enabled: !!id,
+  });
+};
+
+/**
+ * Hook for fetching featured deals for homepage
+ */
+export const useFeaturedDeals = (limit: number = 6) => {
+  return useQuery({
+    queryKey: ['deals', 'featured', limit],
+    queryFn: () => dealsApi.getFeaturedDeals(),
+    staleTime: 1000 * 60 * 30, // 30 minutes - matches backend cache
+  });
+};
+
+/**
+ * Hook for fetching deals ending soon
+ */
+export const useEndingSoonDeals = (days: number = 3, limit: number = 6) => {
+  return useQuery({
+    queryKey: ['deals', 'ending-soon', days, limit],
+    queryFn: () => dealsApi.getEndingSoonDeals(),
+    staleTime: 1000 * 60 * 60,
+  });
+};
+
+/**
+ * Hook for fetching popular deals
+ */
+export const usePopularDeals = (limit: number = 6) => {
+  return useQuery({
+    queryKey: ['deals', 'popular', limit],
+    queryFn: () => dealsApi.getPopularDeals(limit),
+    staleTime: 1000 * 60 * 60 * 24,
+  });
+};
+
+/**
+ * Hook for fetching deals near user's location
+ */
+export const useNearbyDeals = (
+  latitude?: number, 
+  longitude?: number, 
+  radius: number = 10
+) => {
+  return useQuery({
+    queryKey: ['deals', 'nearby', latitude, longitude, radius],
+    queryFn: () => dealsApi.getNearbyDeals(latitude!, longitude!, radius),
+    enabled: !!latitude && !!longitude,
+    staleTime: 1000 * 60 * 10, // 10 minutes
+  });
+};
+
+/**
+ * Hook for searching deals
+ */
+export const useSearchDeals = (query: string) => {
+  return useQuery({
+    queryKey: ['deals', 'search', query],
+    queryFn: () => dealsApi.searchDeals(query),
+    enabled: query.length > 2, // Only search when query is at least 3 characters
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+};
+
+/**
+ * Hook for toggling deal favorite status
+ */
+export const useToggleDealFavorite = () => {
+  const queryClient = useQueryClient();
   
-  /**
-   * Hook for fetching a paginated list of deals with filters
-   */
-  export const useDeals = (params?: DealParams) => {
-    return useQuery({
-      queryKey: ['deals', params],
-      queryFn: () => dealsApi.getDeals(params),
-      keepPreviousData: true,
-    });
-  };
-  
-  /**
-   * Hook for fetching an infinite scrolling list of deals
-   */
-  export const useInfiniteDeals = (params?: DealParams) => {
-    return useInfiniteQuery({
-      queryKey: ['infiniteDeals', params],
-      queryFn: ({ pageParam = 1 }) => 
-        dealsApi.getDeals({ ...params, page: pageParam }),
-      getNextPageParam: (lastPage) => 
-        lastPage.next ? lastPage.page + 1 : undefined,
-    });
-  };
-  
-  /**
-   * Hook for fetching a single deal by ID
-   */
-  export const useDeal = (id?: string) => {
-    return useQuery({
-      queryKey: ['deal', id],
-      queryFn: () => dealsApi.getDealById(id!),
-      enabled: !!id,
-    });
-  };
-  
-  /**
-   * Hook for fetching featured deals for homepage
-   */
-  export const useFeaturedDeals = () => {
-    return useQuery({
-      queryKey: ['featuredDeals'],
-      queryFn: dealsApi.getFeaturedDeals,
-    });
-  };
-  
-  /**
-   * Hook for fetching deals near user's location
-   */
-  export const useNearbyDeals = (
-    latitude?: number, 
-    longitude?: number, 
-    radius?: number
-  ) => {
-    return useQuery({
-      queryKey: ['nearbyDeals', latitude, longitude, radius],
-      queryFn: () => dealsApi.getNearbyDeals(latitude!, longitude!, radius),
-      enabled: !!latitude && !!longitude,
-    });
-  };
-  
-  /**
-   * Hook for searching deals
-   */
-  export const useSearchDeals = (query: string) => {
-    return useQuery({
-      queryKey: ['searchDeals', query],
-      queryFn: () => dealsApi.searchDeals(query),
-      enabled: query.length > 2, // Only search when query is at least 3 characters
-    });
-  };
-  
-  /**
-   * Hook for toggling deal favorite status
-   */
-  export const useToggleDealFavorite = () => {
-    const queryClient = useQueryClient();
-    
-    return useMutation({
-      mutationFn: ({ dealId, isFavorite }: { dealId: string; isFavorite: boolean }) => 
-        dealsApi.toggleFavorite(dealId, isFavorite),
-      onMutate: async ({ dealId, isFavorite }) => {
-        // Cancel any outgoing refetches so they don't overwrite our optimistic update
-        await queryClient.cancelQueries({ queryKey: ['deal', dealId] });
-        
-        // Snapshot the previous value
-        const previousDeal = queryClient.getQueryData<Deal>(['deal', dealId]);
-        
-        // Optimistically update to the new value
-        if (previousDeal) {
-          queryClient.setQueryData(['deal', dealId], {
-            ...previousDeal,
-            isFavorite
-          });
-        }
-        
-        return { previousDeal };
-      },
-      onSuccess: (_, { isFavorite }) => {
-        toast.success(
-          isFavorite 
-            ? 'Deal added to favorites' 
-            : 'Deal removed from favorites'
-        );
-      },
-      onError: (error, { dealId }, context) => {
-        // Rollback to the previous value if there was an error
-        if (context?.previousDeal) {
-          queryClient.setQueryData(['deal', dealId], context.previousDeal);
-        }
-        toast.error('Failed to update favorites. Please try again.');
-      },
-      onSettled: (_, __, { dealId }) => {
-        // Refetch after error or success to make sure our data is correct
-        queryClient.invalidateQueries({ queryKey: ['deal', dealId] });
-        queryClient.invalidateQueries({ queryKey: ['userFavorites'] });
-      },
-    });
-  };
-  
-  /**
-   * Hook for fetching deals by shop ID
-   */
-  export const useDealsByShop = (shopId?: string, params?: DealParams) => {
-    return useQuery({
-      queryKey: ['shopDeals', shopId, params],
-      queryFn: () => dealsApi.getDealsByShop(shopId!, params),
-      enabled: !!shopId,
-    });
-  };
-  
-  /**
-   * Hook for fetching deals by category ID
-   */
-  export const useDealsByCategory = (categoryId?: string, params?: DealParams) => {
-    return useQuery({
-      queryKey: ['categoryDeals', categoryId, params],
-      queryFn: () => dealsApi.getDealsByCategory(categoryId!, params),
-      enabled: !!categoryId,
-    });
-  };
+  return useMutation({
+    mutationFn: ({ dealId, isFavorite }: { dealId: string; isFavorite: boolean }) => 
+      dealsApi.toggleFavorite(dealId, isFavorite),
+    onMutate: async ({ dealId, isFavorite }) => {
+      await queryClient.cancelQueries({ queryKey: ['deal', dealId] });
+      const previousDeal = queryClient.getQueryData<Deal>(['deal', dealId]);
+      
+      if (previousDeal) {
+        queryClient.setQueryData(['deal', dealId], {
+          ...previousDeal,
+          isFavorite
+        });
+      }
+      
+      return { previousDeal };
+    },
+    onSuccess: (_, { isFavorite }) => {
+      toast.success(
+        isFavorite 
+          ? 'Deal added to favorites' 
+          : 'Deal removed from favorites'
+      );
+    },
+    onError: (error, { dealId }, context) => {
+      if (context?.previousDeal) {
+        queryClient.setQueryData(['deal', dealId], context.previousDeal);
+      }
+      toast.error('Failed to update favorites. Please try again.');
+    },
+    onSettled: (_, __, { dealId }) => {
+      queryClient.invalidateQueries({ queryKey: ['deal', dealId] });
+      queryClient.invalidateQueries({ queryKey: ['userFavorites'] });
+    },
+  });
+};
+
+/**
+ * Hook for fetching deals by shop ID
+ */
+export const useDealsByShop = (shopId?: string, limit: number = 12) => {
+  return useQuery({
+    queryKey: ['deals', 'shop', shopId, limit],
+    queryFn: () => dealsApi.getShopDeals(shopId!),
+    enabled: !!shopId,
+    staleTime: 1000 * 60 * 15, // 15 minutes
+  });
+};
+
+/**
+ * Hook for fetching deals by category ID
+ */
+export const useDealsByCategory = (categoryId?: string, limit: number = 12) => {
+  return useQuery({
+    queryKey: ['deals', 'category', categoryId, limit],
+    queryFn: () => dealsApi.getCategoryDeals(categoryId!),
+    enabled: !!categoryId,
+    staleTime: 1000 * 60 * 60,
+  });
+};
+
+/**
+ * Hook for fetching related deals for a specific deal
+ */
+export const useRelatedDeals = (dealId?: string, limit: number = 3) => {
+  return useQuery({
+    queryKey: ['deals', 'related', dealId, limit],
+    queryFn: () => dealsApi.getRelatedDeals(dealId!, limit),
+    enabled: !!dealId,
+    staleTime: 1000 * 60 * 30,
+  });
+};

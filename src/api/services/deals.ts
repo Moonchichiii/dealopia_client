@@ -62,4 +62,34 @@ export const dealsApi = {
     const { data } = await apiClient.post(`/deals/${id}/track_click/`);
     return data;
   },
+
+  /**
+   * Get deals by category with proper caching support
+   */
+  getDealsByCategory: async (categoryId: number | string, limit: number = 12) => {
+    const { data } = await apiClient.get(`/categories/${categoryId}/deals/`, {
+      params: { limit }
+    });
+    return data;
+  },
+  
+  /**
+   * Get popular deals - leveraging the new backend endpoint
+   */
+  getPopularDeals: async (limit: number = 6) => {
+    const { data } = await apiClient.get('/deals/popular/', {
+      params: { limit }
+    });
+    return data;
+  },
+
+  /**
+   * Get related deals for a specific deal
+   */
+  getRelatedDeals: async (dealId: number | string, limit: number = 3) => {
+    const { data } = await apiClient.get(`/deals/${dealId}/related/`, {
+      params: { limit }
+    });
+    return data;
+  }
 };
