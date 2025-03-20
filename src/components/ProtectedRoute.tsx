@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import apiClient, { updateAuthStatus } from '@/api/client';
-import Loader from './common/Loader';
+import Loader from './Loader';
 
 const ProtectedRoute = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);

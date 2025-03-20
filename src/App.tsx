@@ -1,78 +1,63 @@
-import { lazy, useState, useEffect } from 'react';
-import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import React from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Routes, Route } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { createClient } from '@supabase/supabase-js';
+import { SessionContextProvider } from '@supabase/auth-helpers-react';
+import './i18n/config';
+
+// Pages
+import Home from './pages/Home';
+import SignIn from './pages/SignIn';
+import SignUp from './pages/SignUp';
+import Dashboard from './pages/Dashboard';
 
 // Components
-import Layout from '@/components/layout/Layout';
-import Loader from '@/components/common/Loader';
-import ErrorBoundary from '@/components/common/ErrorBoundary';
-import ProtectedRoute from '@/components/ProtectedRoute';
+import Header from './components/Header';
+import Footer from './components/Footer';
+import CookieConsent from './components/CookieConsent';
 
-// Lazy-loaded pages with Suspense wrappers
-const Home = lazy(() => import('@/pages/home/Home'));
-const Deals = lazy(() => import('@/pages/deals/Deals'));
-const DealDetail = lazy(() => import('@/pages/deals/DealDetail'));
-const Shops = lazy(() => import('@/pages/shops/shops'));
-const ShopDetail = lazy(() => import('@/pages/shops/ShopDetail'));
-const Dashboard = lazy(() => import('@/pages/dashboard/Dashboard'));
-const NotFound = lazy(() => import('@/pages/notfound/NotFound'));
+// Check if environment variables are defined
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error(
+    'Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY environment variables'
+  );
+}
+
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5,
+      gcTime: 1000 * 60 * 60,
+      retry: 3,
+    },
+  },
+});
 
 function App() {
-  const [loading, setLoading] = useState(true);
-  const [progress, setProgress] = useState(0);
-
-  // More efficient loading simulation
-  useEffect(() => {
-    if (loading) {
-      // Faster loading simulation
-      const interval = setInterval(() => {
-        setProgress(prev => {
-          const increment = Math.random() * 25; // Larger increments
-          const newProgress = prev + increment;
-         
-          if (newProgress >= 99) {
-            clearInterval(interval);
-            setTimeout(() => {
-              setProgress(100);
-              setTimeout(() => setLoading(false), 300); // Shorter delay
-            }, 200); // Shorter delay
-            return 99;
-          }
-         
-          return newProgress;
-        });
-      }, 200); // Faster interval
-     
-      return () => clearInterval(interval);
-    }
-  }, [loading]);
-
-  // Show initial loader while app is loading
-  if (loading) {
-    return <Loader progress={progress} isInitial={true} />;
-  }
-
-  // Create the router configuration
-  const router = createBrowserRouter([
-    {
-      path: "/",
-      element: <Layout />,
-      errorElement: <ErrorBoundary />,
-      children: [
-        { index: true, element: <Home /> },
-        { path: "deals", element: <Deals /> },
-        { path: "deals/:id", element: <DealDetail /> },
-        { path: "shops", element: <Shops /> },
-        { path: "shops/:id", element: <ShopDetail /> },
-        {
-          path: "dashboard/*",
-          element: <ProtectedRoute><Dashboard /></ProtectedRoute>
-        },
-        { path: "*", element: <NotFound /> }
-      ]
-    }
-  ]);
-
-  return <RouterProvider router={router} />;
+  return (
+    <SessionContextProvider supabaseClient={supabase}>
+      <QueryClientProvider client={queryClient}>
+        <div className="min-h-screen bg-gradient-to-br from-primary-950 via-stone-950 to-accent-950 animate-gradient-xy">
+          <div className="absolute inset-0 bg-[url('/noise.svg')] opacity-[0.015] pointer-events-none"></div>
+          <Header />
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/signin" element={<SignIn />} />
+            <Route path="/signup" element={<SignUp />} />
+            <Route path="/dashboard/*" element={<Dashboard />} />
+          </Routes>
+          <Footer />
+          <CookieConsent />
+        </div>
+      </QueryClientProvider>
+    </SessionContextProvider>
+  );
 }
 
 export default App;

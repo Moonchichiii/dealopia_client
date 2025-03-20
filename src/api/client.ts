@@ -1,14 +1,15 @@
 import axios from 'axios';
 
-// Flag to track if a refresh token request is in progress
+// Auth state management
 let isRefreshing = false;
-// Queue of requests that are waiting for the token refresh
 let failedQueue = [];
-// Flag to track if the user is authenticated
 let isAuthenticated = false;
 
-// Process the queue of failed requests
-const processQueue = (error, token = null) => {
+/**
+ * Process the queue of failed requests after token refresh
+ * @param {Error|null} error - Error if token refresh failed
+ */
+const processQueue = (error = null) => {
   failedQueue.forEach(promise => {
     if (error) {
       promise.reject(error);
@@ -20,9 +21,11 @@ const processQueue = (error, token = null) => {
   failedQueue = [];
 };
 
-// Function to check if user has an access token in cookies
+/**
+ * Check if the user has an auth token cookie
+ * @returns {boolean} Whether the user is authenticated
+ */
 const checkAuthStatus = () => {
-  // Simple check for authentication cookie - adjust based on your actual cookie name
   const cookies = document.cookie.split(';');
   const hasAuthCookie = cookies.some(cookie => 
     cookie.trim().startsWith('auth-token=')
@@ -32,7 +35,7 @@ const checkAuthStatus = () => {
 };
 
 /**
- * Main API client instance configured for the Dealopia backend
+ * Main API client instance for the Dealopia backend
  */
 const apiClient = axios.create({
   baseURL: '/api/v1',
@@ -40,112 +43,132 @@ const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  withCredentials: true, // This is crucial for sending cookies with requests
+  withCredentials: true, // Crucial for sending cookies with requests
 });
 
-// Request interceptor to avoid auth checks when not authenticated
+/**
+ * Request interceptor
+ * - Skip auth endpoints if not authenticated
+ * - Add request ID for debugging
+ */
 apiClient.interceptors.request.use(
   (config) => {
-    // Skip auth endpoints if not authenticated
-    if (!isAuthenticated && 
+    // Add a unique request ID for debugging
+    config.headers['X-Request-ID'] = `req_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`;
+
+    // Skip certain auth endpoints if not authenticated to avoid unnecessary requests
+    if (!isAuthenticated && config.url !== '/auth/login/' && 
         (config.url === '/auth/me/' || config.url === '/auth/token/refresh/')) {
-      // Cancel the request
       const source = axios.CancelToken.source();
       config.cancelToken = source.token;
-      source.cancel('Not authenticated, skipping auth check');
+      source.cancel('Authentication required');
     }
+    
     return config;
   },
   (error) => Promise.reject(error)
 );
 
-// Response interceptor for handling errors
+/**
+ * Response interceptor
+ * - Handle 401 errors with token refresh
+ * - Update authentication state
+ */
 apiClient.interceptors.response.use(
   (response) => {
-    // If we get a successful response from auth/me, update authenticated status
-    if (response.config.url === '/auth/me/') {
+    // Update authentication state on successful auth requests
+    if (response.config.url.includes('/auth/login/') || 
+        response.config.url.includes('/auth/registration/')) {
+      isAuthenticated = true;
+    } else if (response.config.url.includes('/auth/logout/')) {
+      isAuthenticated = false;
+    } else if (response.config.url === '/auth/me/') {
       isAuthenticated = true;
     }
+    
     return response;
   },
   async (error) => {
-    // If the request was cancelled by our interceptor, just return
+    // Handle request cancellation
     if (axios.isCancel(error)) {
       return Promise.reject(error);
     }
-
+    
     const originalRequest = error.config;
     
-    // Don't retry if:
-    // 1. The request has already been retried
-    // 2. It's a refresh token request itself (prevent loop)
-    // 3. The status is not 401 (Unauthorized)
-    if (
-      originalRequest._retry || 
-      originalRequest.url === '/auth/token/refresh/' || 
-      error.response?.status !== 401
-    ) {
-      // If auth/me fails with 401, update authenticated status
-      if (originalRequest.url === '/auth/me/') {
-        isAuthenticated = false;
-      }
-      return Promise.reject(error);
-    }
-    
-    // Mark as retried to prevent multiple attempts
-    originalRequest._retry = true;
-    
-    // If a token refresh is already in progress, add this request to the queue
-    if (isRefreshing) {
-      return new Promise((resolve, reject) => {
-        failedQueue.push({ resolve, reject });
-      })
-        .then(() => {
-          return apiClient(originalRequest);
+    // Only attempt to refresh token for 401 errors on endpoints that require auth
+    // Skip if we're already trying to refresh or it's a refresh request itself
+    if (error.response?.status === 401 && 
+        !originalRequest._retry && 
+        originalRequest.url !== '/auth/token/refresh/' &&
+        originalRequest.url !== '/auth/login/' &&
+        originalRequest.url !== '/auth/registration/') {
+      
+      // Mark this request as having been retried
+      originalRequest._retry = true;
+      
+      // If a token refresh is already in progress, queue this request
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
         })
-        .catch(err => {
-          return Promise.reject(err);
-        });
-    }
-    
-    // Start the refresh token process
-    isRefreshing = true;
-    
-    try {
-      // Try to refresh the token using the refresh cookie that's already attached
-      await axios.post('/api/v1/auth/token/refresh/', {}, {
-        withCredentials: true
-      });
-      
-      // If the refresh succeeded, update auth status and process the queue
-      isAuthenticated = true;
-      isRefreshing = false;
-      processQueue(null);
-      return apiClient(originalRequest);
-    } catch (refreshError) {
-      // If refresh fails, update auth status and process the queue with error
-      isAuthenticated = false;
-      isRefreshing = false;
-      processQueue(refreshError);
-      
-      // Only redirect if it's a real auth error, not a network error
-      if (refreshError.response?.status === 401) {
-        console.log('Authentication failed, redirecting to login page');
-        window.location.href = '/login';
+          .then(() => apiClient(originalRequest))
+          .catch(err => Promise.reject(err));
       }
       
-      return Promise.reject(refreshError);
+      // Start the refresh token process
+      isRefreshing = true;
+      
+      try {
+        // Attempt to refresh token
+        await axios.post('/api/v1/auth/token/refresh/', {}, {
+          withCredentials: true
+        });
+        
+        // Refresh succeeded
+        isAuthenticated = true;
+        isRefreshing = false;
+        
+        // Process queued requests
+        processQueue();
+        
+        // Retry the original request
+        return apiClient(originalRequest);
+      } catch (refreshError) {
+        // Refresh failed
+        isAuthenticated = false;
+        isRefreshing = false;
+        
+        // Process queued requests with the error
+        processQueue(refreshError);
+        
+        // Handle expired session
+        if (refreshError.response?.status === 401 || refreshError.response?.status === 403) {
+          console.log('Session expired. Please log in again.');
+          
+          // Dispatch a custom event that can be listened for by auth components
+          window.dispatchEvent(new CustomEvent('auth:sessionExpired'));
+        }
+        
+        return Promise.reject(refreshError);
+      }
     }
+    
+    // Handle other errors
+    return Promise.reject(error);
   }
 );
 
-// Initialize authentication status on load
+// Initialize auth status
 checkAuthStatus();
 
-export default apiClient;
-
-// Export a function to manually update auth status (useful after login/logout)
+/**
+ * Update the authentication status manually
+ * @param {boolean} status - New authentication status
+ */
 export const updateAuthStatus = (status) => {
   isAuthenticated = status;
   return status;
 };
+
+export default apiClient;

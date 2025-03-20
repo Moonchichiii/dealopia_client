@@ -1,202 +1,93 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-/* Custom CSS Variables with @theme directive */
-@theme {
-  /* Typography */
-  --font-sans: 'Inter var', 'Inter', system-ui, sans-serif;
-  --font-display: 'Lexend', sans-serif;
-
-  /* Color Tokens */
-  --color-primary-50: oklch(0.971 0.013 17.38);
-  --color-primary-100: oklch(0.936 0.032 17.717);
-  --color-primary-200: oklch(0.885 0.062 18.334);
-  --color-primary-300: oklch(0.808 0.114 19.571);
-  --color-primary-400: oklch(0.704 0.191 22.216);
-  --color-primary-500: oklch(0.637 0.237 25.331);
-  --color-primary-600: oklch(0.577 0.245 27.325);
-  --color-primary-700: oklch(0.505 0.213 27.518);
-  --color-primary-800: oklch(0.444 0.177 26.899);
-  --color-primary-900: oklch(0.396 0.141 25.723);
-  
-  --color-secondary-50: oklch(0.984 0.003 247.858);
-  --color-secondary-100: oklch(0.968 0.007 247.896);
-  --color-secondary-200: oklch(0.929 0.013 255.508);
-  --color-secondary-300: oklch(0.869 0.022 252.894);
-  --color-secondary-400: oklch(0.704 0.04 256.788);
-  --color-secondary-500: oklch(0.554 0.046 257.417);
-  --color-secondary-600: oklch(0.446 0.043 257.281);
-  --color-secondary-700: oklch(0.372 0.044 257.287);
-  --color-secondary-800: oklch(0.279 0.041 260.031);
-  --color-secondary-900: oklch(0.208 0.042 265.755);
-  
-  --color-accent-50: oklch(0.98 0.016 73.684);
-  --color-accent-100: oklch(0.954 0.038 75.164);
-  --color-accent-200: oklch(0.901 0.076 70.697);
-  --color-accent-300: oklch(0.837 0.128 66.29);
-  --color-accent-400: oklch(0.75 0.183 55.934);
-  --color-accent-500: oklch(0.705 0.213 47.604);
-  --color-accent-600: oklch(0.646 0.222 41.116);
-  --color-accent-700: oklch(0.553 0.195 38.402);
-  --color-accent-800: oklch(0.47 0.157 37.304);
-  --color-accent-900: oklch(0.408 0.123 38.172);
-  /* Hero gradient colors */
-  --hero-gradient-from: #70BCFF;
-  --hero-gradient-to: #00F5A0;
-  --accent-pink: #FF38B4;
-  --accent-blue: #70BCFF;
-
+/* Smooth Scrolling */
+html {
+  scroll-behavior: smooth;
 }
 
-
-/* Dark Mode Selector */
-.dark {
-  color-scheme: dark;
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
 }
 
-/* Base styles */
-@layer base {
-  html,
-  body {
-    font-family: var(--font-sans);
-    scroll-behavior: smooth;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-  }
-
-  /* Custom Typography */
-  .text-display {
-    font-family: var(--font-display);
-  }
-
-  /* Smooth Scrolling for Anchor Links */
-  html {
-    scroll-padding-top: 4rem;
-  }
-
-  /* Custom Focus Styles */
-  *:focus-visible {
-    outline-width: 2px;
-    outline-offset: 2px;
-    outline-color: var(--color-primary-500);
-  }
-
-  /* Scrollbar Styling (Webkit Browsers) */
-  ::-webkit-scrollbar {
-    width: 0.5rem;
-    background-color: var(--color-secondary-100);
-  }
-
-  .dark ::-webkit-scrollbar {
-    background-color: var(--color-secondary-900);
-  }
-
-  ::-webkit-scrollbar-thumb {
-    background-color: var(--color-primary-300);
-    border-radius: 9999px;
-  }
-
-  ::-webkit-scrollbar-thumb:hover {
-    background-color: var(--color-primary-400);
-  }
+::-webkit-scrollbar-track {
+  @apply bg-stone-900;
 }
 
-/* Component styles */
-@layer components {
-  .prose-custom {
-    max-width: none;
-  }
-
-  /* Form Inputs Global Style */
-  input, 
-  textarea, 
-  select {
-    border-color: var(--color-secondary-300);
-  }
-
-  input:focus, 
-  textarea:focus, 
-  select:focus {
-    border-color: var(--color-primary-500);
-    outline: none;
-    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
-  }
-
-  /* Button Reset */
-  .btn-reset {
-    appearance: none;
-    background-color: transparent;
-    border: none;
-    cursor: pointer;
-  }
+::-webkit-scrollbar-thumb {
+  @apply bg-stone-700 rounded-full;
 }
 
-/* Custom Animation Utilities */
-@layer utilities {
-  .animate-fade-in {
-    animation: fadeIn 0.5s ease-in-out;
-  }
-
-  .animate-slide-up {
-    animation: slideUp 0.5s ease-out;
-  }
-
-  .animate-slide-down {
-    animation: slideDown 0.5s ease-out;
-  }
-
-  .animate-slide-in-right {
-    animation: slideInRight 0.5s ease-out;
-  }
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-stone-600;
 }
 
-/* Accessibility Enhancements */
-@media (prefers-reduced-motion: reduce) {
-  * {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
+/* Leaflet Map Styles */
+.leaflet-container {
+  @apply bg-stone-900;
 }
 
-/* Keyframes for animations */
+.leaflet-popup-content-wrapper {
+  @apply rounded-xl shadow-lg bg-white/95 backdrop-blur-sm border border-stone-200;
+}
+
+.leaflet-popup-tip {
+  @apply bg-white/95;
+}
+
+.leaflet-control-zoom {
+  @apply !border-none !shadow-lg;
+}
+
+.leaflet-control-zoom-in,
+.leaflet-control-zoom-out {
+  @apply !bg-white/95 !backdrop-blur-sm !border !border-stone-200 !text-stone-900 hover:!bg-stone-50;
+}
+
+.leaflet-bar {
+  @apply !rounded-xl !overflow-hidden;
+}
+
+.leaflet-touch .leaflet-bar a:first-child {
+  @apply !rounded-t-xl;
+}
+
+.leaflet-touch .leaflet-bar a:last-child {
+  @apply !rounded-b-xl;
+}
+
+/* Video Background */
+video {
+  filter: brightness(0.7) saturate(1.2);
+}
+
+/* Animation Classes */
+.animate-fade-in {
+  animation: fadeIn 0.8s ease-out forwards;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.8s ease-out forwards;
+}
+
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes slideUp {
-  from { 
+  from {
     transform: translateY(20px);
     opacity: 0;
   }
-  to { 
+  to {
     transform: translateY(0);
     opacity: 1;
   }
 }
-
-@keyframes slideDown {
-  from { 
-    transform: translateY(-20px);
-    opacity: 0;
-  }
-  to { 
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-
-@keyframes slideInRight {
-  from { 
-    transform: translateX(20px);
-    opacity: 0;
-  }
-  to { 
-    transform: translateX(0);
-    opacity: 1;
-  }
-}
-
-
-
