@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { Search, Filter, X, MapPin } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useGeolocation } from '../hooks/useGeolocation';
@@ -50,23 +50,23 @@ const SearchBar: React.FC<SearchBarProps> = ({
   };
 
   return (
-    <div className={`relative ${className}`}>
+    <div className={cn("relative", className)}>
       <form onSubmit={handleSearch} className="relative" ref={searchContainerRef}>
-        <div className="flex items-center gap-2 p-2 bg-white dark:bg-stone-900 rounded-full shadow-soft">
+        <div className="flex items-center gap-2 p-2 bg-white/90 dark:bg-black/90 backdrop-blur-sm rounded-full shadow-soft">
           <div className="flex-1 relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400" size={20} />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
             <input
               type="text"
               placeholder={t('search.placeholder')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-transparent border-none pl-12 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary-500 rounded-full"
+              className="w-full bg-transparent border-none pl-12 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary-500/50 rounded-full text-black dark:text-white"
             />
             {searchQuery && (
               <button
                 type="button"
                 onClick={() => setSearchQuery('')}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600"
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
               >
                 <X size={16} />
               </button>
@@ -77,7 +77,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
             <button
               type="button"
               onClick={handleSearch}
-              className="hidden md:flex items-center gap-2 px-4 py-2 text-stone-600 hover:text-stone-900 rounded-full"
+              className="hidden md:flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white rounded-full transition-colors"
             >
               <MapPin size={18} />
               <span>{t('search.nearMe')}</span>
@@ -90,29 +90,30 @@ const SearchBar: React.FC<SearchBarProps> = ({
             className={cn(
               "p-2 rounded-full transition-colors",
               showFilters 
-                ? "bg-primary-500 text-white" 
-                : "text-stone-600 hover:bg-stone-100 dark:hover:bg-stone-800"
+                ? "bg-[#8b5cf6] text-white" 
+                : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
             )}
+            aria-label="Toggle filters"
           >
             <Filter size={20} />
           </button>
 
           <button
             type="submit"
-            className="hidden md:block bg-primary-500 hover:bg-primary-600 text-white px-6 py-2 rounded-full font-medium transition-colors"
+            className="hidden md:flex items-center justify-center bg-[#8b5cf6] hover:bg-[#7c3aed] text-white px-6 py-2 rounded-full font-medium transition-colors"
           >
             {t('search.button')}
           </button>
         </div>
 
         {showFilters && (
-          <div className="absolute top-full mt-2 w-full bg-white dark:bg-stone-900 rounded-xl shadow-elevation p-4 border border-stone-200 dark:border-stone-800">
+          <div className="absolute top-full mt-2 w-full bg-white/95 dark:bg-black/95 backdrop-blur-sm rounded-xl shadow-elevation p-4 border border-gray-200 dark:border-gray-800 z-20">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-medium">{t('search.filters')}</h3>
+              <h3 className="font-medium text-black dark:text-white">{t('search.filters')}</h3>
               {selectedCategories.length > 0 && (
                 <button 
                   onClick={() => setSelectedCategories([])}
-                  className="text-sm text-stone-500 hover:text-stone-700"
+                  className="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
                 >
                   {t('search.clearAll')}
                 </button>
@@ -121,7 +122,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
 
             {categories.length > 0 && (
               <div>
-                <h4 className="text-sm text-stone-500 mb-2">{t('search.categories')}</h4>
+                <h4 className="text-sm text-gray-500 dark:text-gray-400 mb-2">{t('search.categories')}</h4>
                 <div className="flex flex-wrap gap-2">
                   {categories.map((category) => (
                     <button
@@ -131,8 +132,8 @@ const SearchBar: React.FC<SearchBarProps> = ({
                       className={cn(
                         "px-3 py-1 rounded-full text-sm transition-colors",
                         selectedCategories.includes(category.id)
-                          ? "bg-primary-500 text-white"
-                          : "bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-700"
+                          ? "bg-[#8b5cf6] text-white"
+                          : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
                       )}
                     >
                       {category.name}

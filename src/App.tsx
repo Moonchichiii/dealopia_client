@@ -1,62 +1,96 @@
-import React from 'react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Routes, Route } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
-import { createClient } from '@supabase/supabase-js';
-import { SessionContextProvider } from '@supabase/auth-helpers-react';
-import './i18n/config';
-
-// Pages
-import Home from './pages/Home';
-import SignIn from './pages/SignIn';
-import SignUp from './pages/SignUp';
-import Dashboard from './pages/Dashboard';
+import { Suspense, lazy, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { queryClient } from '@/lib/queryClient';
+import { AuthProvider } from '@/context/AuthContext';
+import { AuthModalProvider } from '@/context/AuthModalContext';
+import { ProfileProvider } from '@/context/ProfileContext';
+import { ThemeProvider } from '@/context/ThemeContext';
+import { ToastContainer } from 'react-toastify';
 
 // Components
-import Header from './components/Header';
-import Footer from './components/Footer';
-import CookieConsent from './components/CookieConsent';
+import Layout from '@/components/Layout';
+import ProtectedRoute from '@/components/ProtectedRoute';
+import Loader from '@/components/Loader';
 
-// Check if environment variables are defined
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+// Styles
+import 'react-toastify/dist/ReactToastify.css';
+import '@/globals.css';
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error(
-    'Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY environment variables'
-  );
-}
+const createModalRoot = () => {
+  const modalRoot = document.createElement('div');
+  modalRoot.id = 'modal-root';
+  document.body.appendChild(modalRoot);
+};
 
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 1000 * 60 * 5,
-      gcTime: 1000 * 60 * 60,
-      retry: 3,
-    },
-  },
-});
+// Lazy loaded pages
+const Home = lazy(() => import('@/pages/Home'));
+const SignIn = lazy(() => import('@/pages/SignIn'));
+const SignUp = lazy(() => import('@/pages/SignUp'));
+const Dashboard = lazy(() => import('@/pages/Dashboard'));
+const About = lazy(() => import('@/pages/About'));
+const NotFound = lazy(() => import('@/pages/NotFound'));
 
 function App() {
+  useEffect(() => {
+    if (!document.getElementById('modal-root')) {
+      createModalRoot();
+    }
+  }, []);
+
   return (
-    <SessionContextProvider supabaseClient={supabase}>
-      <QueryClientProvider client={queryClient}>
-        <div className="min-h-screen bg-gradient-to-br from-primary-950 via-stone-950 to-accent-950 animate-gradient-xy">
-          <div className="absolute inset-0 bg-[url('/noise.svg')] opacity-[0.015] pointer-events-none"></div>
-          <Header />
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/signin" element={<SignIn />} />
-            <Route path="/signup" element={<SignUp />} />
-            <Route path="/dashboard/*" element={<Dashboard />} />
-          </Routes>
-          <Footer />
-          <CookieConsent />
-        </div>
-      </QueryClientProvider>
-    </SessionContextProvider>
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider>
+        <AuthProvider>
+          <AuthModalProvider>
+            <ProfileProvider>
+              <Router>
+                <Suspense fallback={<Loader progress={50} />}>
+                  <Routes>
+                    <Route path="/" element={<Layout />}>
+                      <Route index element={<Home />} />
+                      <Route path="about" element={<About />} />
+                     
+                      <Route path="signin" element={
+                        <ProtectedRoute requireAuth={false}>
+                          <SignIn />
+                        </ProtectedRoute>
+                      } />
+                      <Route path="signup" element={
+                        <ProtectedRoute requireAuth={false}>
+                          <SignUp />
+                        </ProtectedRoute>
+                      } />
+                     
+                      <Route path="dashboard/*" element={
+                        <ProtectedRoute>
+                          <Dashboard />
+                        </ProtectedRoute>
+                      } />
+                     
+                      <Route path="*" element={<NotFound />} />
+                    </Route>
+                  </Routes>
+                </Suspense>
+              </Router>
+             
+              <ToastContainer
+                position="top-right"
+                autoClose={5000}
+                hideProgressBar={false}
+                newestOnTop
+                closeOnClick
+                rtl={false}
+                pauseOnFocusLoss
+                draggable
+                pauseOnHover
+                theme="dark"
+              />
+            </ProfileProvider>
+          </AuthModalProvider>
+        </AuthProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
   );
 }
 

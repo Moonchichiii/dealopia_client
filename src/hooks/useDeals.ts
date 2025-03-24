@@ -8,9 +8,7 @@ import { dealsApi } from '@/api';
 import { Deal, DealFilters } from '@/types/deals';
 import { toast } from 'react-toastify';
 
-/**
- * Hook for fetching a paginated list of deals with filters
- */
+/** Fetch paginated deals with filters */
 export const useDeals = (params?: DealFilters) => {
   return useQuery({
     queryKey: ['deals', params],
@@ -19,9 +17,7 @@ export const useDeals = (params?: DealFilters) => {
   });
 };
 
-/**
- * Hook for fetching an infinite scrolling list of deals
- */
+/** Fetch infinite scrolling deals list */
 export const useInfiniteDeals = (filters?: DealFilters) => {
   return useInfiniteQuery({
     queryKey: ['deals', 'infinite', filters],
@@ -46,9 +42,7 @@ export const useInfiniteDeals = (filters?: DealFilters) => {
   });
 };
 
-/**
- * Hook for fetching a single deal by ID
- */
+/** Fetch single deal by ID */
 export const useDeal = (id?: string) => {
   return useQuery({
     queryKey: ['deal', id],
@@ -57,20 +51,16 @@ export const useDeal = (id?: string) => {
   });
 };
 
-/**
- * Hook for fetching featured deals for homepage
- */
+/** Fetch featured deals */
 export const useFeaturedDeals = (limit: number = 6) => {
   return useQuery({
     queryKey: ['deals', 'featured', limit],
     queryFn: () => dealsApi.getFeaturedDeals(),
-    staleTime: 1000 * 60 * 30, // 30 minutes - matches backend cache
+    staleTime: 1000 * 60 * 30,
   });
 };
 
-/**
- * Hook for fetching deals ending soon
- */
+/** Fetch deals ending soon */
 export const useEndingSoonDeals = (days: number = 3, limit: number = 6) => {
   return useQuery({
     queryKey: ['deals', 'ending-soon', days, limit],
@@ -79,9 +69,7 @@ export const useEndingSoonDeals = (days: number = 3, limit: number = 6) => {
   });
 };
 
-/**
- * Hook for fetching popular deals
- */
+/** Fetch popular deals */
 export const usePopularDeals = (limit: number = 6) => {
   return useQuery({
     queryKey: ['deals', 'popular', limit],
@@ -90,9 +78,7 @@ export const usePopularDeals = (limit: number = 6) => {
   });
 };
 
-/**
- * Hook for fetching deals near user's location
- */
+/** Fetch deals near user's location */
 export const useNearbyDeals = (
   latitude?: number, 
   longitude?: number, 
@@ -102,25 +88,21 @@ export const useNearbyDeals = (
     queryKey: ['deals', 'nearby', latitude, longitude, radius],
     queryFn: () => dealsApi.getNearbyDeals(latitude!, longitude!, radius),
     enabled: !!latitude && !!longitude,
-    staleTime: 1000 * 60 * 10, // 10 minutes
+    staleTime: 1000 * 60 * 10,
   });
 };
 
-/**
- * Hook for searching deals
- */
+/** Search deals */
 export const useSearchDeals = (query: string) => {
   return useQuery({
     queryKey: ['deals', 'search', query],
     queryFn: () => dealsApi.searchDeals(query),
-    enabled: query.length > 2, // Only search when query is at least 3 characters
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    enabled: query.length > 2,
+    staleTime: 1000 * 60 * 5,
   });
 };
 
-/**
- * Hook for toggling deal favorite status
- */
+/** Toggle deal favorite status */
 export const useToggleDealFavorite = () => {
   const queryClient = useQueryClient();
   
@@ -160,21 +142,17 @@ export const useToggleDealFavorite = () => {
   });
 };
 
-/**
- * Hook for fetching deals by shop ID
- */
+/** Fetch deals by shop */
 export const useDealsByShop = (shopId?: string, limit: number = 12) => {
   return useQuery({
     queryKey: ['deals', 'shop', shopId, limit],
     queryFn: () => dealsApi.getShopDeals(shopId!),
     enabled: !!shopId,
-    staleTime: 1000 * 60 * 15, // 15 minutes
+    staleTime: 1000 * 60 * 15,
   });
 };
 
-/**
- * Hook for fetching deals by category ID
- */
+/** Fetch deals by category */
 export const useDealsByCategory = (categoryId?: string, limit: number = 12) => {
   return useQuery({
     queryKey: ['deals', 'category', categoryId, limit],
@@ -184,9 +162,7 @@ export const useDealsByCategory = (categoryId?: string, limit: number = 12) => {
   });
 };
 
-/**
- * Hook for fetching related deals for a specific deal
- */
+/** Fetch related deals */
 export const useRelatedDeals = (dealId?: string, limit: number = 3) => {
   return useQuery({
     queryKey: ['deals', 'related', dealId, limit],

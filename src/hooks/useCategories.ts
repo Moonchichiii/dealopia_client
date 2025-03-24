@@ -1,31 +1,31 @@
-import { useQuery } from '@tanstack/react-query';
-import { categoriesApi } from '@/api';
+import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
+import { categoriesApi, dealsApi } from '@/api';
 
 /**
- * Hook for fetching all categories
+ * Fetch all categories
  */
 export const useCategories = (params?: { parent?: number; is_active?: boolean }) => {
   return useQuery({
     queryKey: ['categories', params],
     queryFn: () => categoriesApi.getCategories(params),
-    staleTime: 1000 * 60 * 60, // 1 hour
+    staleTime: 1000 * 60 * 60,
   });
 };
 
 /**
- * Hook for fetching a single category
+ * Fetch a single category
  */
 export const useCategory = (id?: number | string) => {
   return useQuery({
     queryKey: ['category', id],
     queryFn: () => categoriesApi.getCategory(id!),
     enabled: !!id,
-    staleTime: 1000 * 60 * 30, // 30 minutes
+    staleTime: 1000 * 60 * 30,
   });
 };
 
 /**
- * Hook for searching deals with infinite scrolling
+ * Search deals with infinite scrolling
  */
 export const useSearchDeals = (query: string, categoryId?: number) => {
   return useInfiniteQuery({

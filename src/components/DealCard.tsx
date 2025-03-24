@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { MapPin, Leaf, Clock } from 'lucide-react';
 import { Deal } from '../types/deal';
@@ -15,43 +15,52 @@ export const DealCard: React.FC<DealCardProps> = ({ deal, priority = false, clas
   const cardRef = useRef<HTMLDivElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
 
-  useEffect(() => {
-    if (!imgRef.current) return;
-
-    // Load high-quality image after component mounts
-    const img = new Image();
-    img.src = deal.imageUrl;
-    img.onload = () => {
-      if (imgRef.current) {
-        imgRef.current.src = deal.imageUrl;
-      }
-    };
-  }, [deal.imageUrl]);
-
+  // Calculate discount percentage outside of render
   const discountPercentage = Math.round((1 - deal.price / deal.originalPrice) * 100);
-
-  // Generate blur hash placeholder URL
+  
+  // Use low-res placeholder initially to reserve space
   const placeholderUrl = `https://images.unsplash.com/photo-${deal.imageUrl.split('photo-')[1]}&w=20&blur=50`;
 
   return (
-    <motion.div
+    <div
       ref={cardRef}
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
       className={cn(
-        'group relative bg-white dark:bg-stone-900 rounded-xl overflow-hidden shadow-card hover:shadow-elevation transition-shadow duration-300',
+        'group relative bg-white dark:bg-neutral-900 rounded-xl overflow-hidden shadow-card hover:shadow-elevation transition-shadow duration-300',
         className
       )}
       id={`deal-${deal.id}`}
       role="article"
       aria-labelledby={`deal-title-${deal.id}`}
+      // Remove the motion animation to prevent layout shifts
     >
-      <div className="aspect-w-16 aspect-h-9 bg-stone-100 dark:bg-stone-800">
+      {/* Reserve space with a specific aspect ratio */}
+      <div 
+        className="aspect-w-16 aspect-h-9 bg-neutral-100 dark:bg-neutral-800"
+        style={{ 
+          aspectRatio: "16/9", 
+          width: "100%",
+          position: "relative"
+        }}
+      >
+        {/* Use a background color while loading */}
+        <div 
+          style={{ 
+            position: "absolute", 
+            top: 0, 
+            left: 0, 
+            width: "100%", 
+            height: "100%", 
+            backgroundColor: "#1f1f1f" 
+          }} 
+        />
+        
+        {/* Image with explicit width and height */}
         <img
           ref={imgRef}
-          src={placeholderUrl}
+          src={placeholderUrl} // Start with low-res placeholder
           alt={deal.title}
+          width="800"
+          height="450"
           className="object-cover w-full h-full transition-opacity duration-300"
           loading={priority ? 'eager' : 'lazy'}
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
@@ -60,7 +69,10 @@ export const DealCard: React.FC<DealCardProps> = ({ deal, priority = false, clas
             ${deal.imageUrl}&w=800 800w,
             ${deal.imageUrl}&w=1200 1200w
           `}
+          style={{ position: "absolute", top: 0, left: 0 }}
         />
+        
+        {/* Fixed position for the discount badge */}
         <div 
           className="absolute top-2 right-2 bg-accent-500 text-white px-3 py-1 rounded-full text-sm font-semibold"
           aria-label={`${discountPercentage}% discount`}
@@ -69,11 +81,13 @@ export const DealCard: React.FC<DealCardProps> = ({ deal, priority = false, clas
         </div>
       </div>
 
+      {/* Content has fixed height to prevent shifts */}
       <div className="p-4">
         <div className="flex items-start justify-between mb-2">
           <h3 
             id={`deal-title-${deal.id}`}
-            className="text-lg font-display font-semibold text-stone-900 dark:text-stone-100 line-clamp-2"
+            className="text-lg font-display font-semibold text-neutral-900 dark:text-neutral-100 line-clamp-2"
+            style={{ minHeight: "3.5rem" }} // Reserve space for two lines of text
           >
             {deal.title}
           </h3>
@@ -86,7 +100,10 @@ export const DealCard: React.FC<DealCardProps> = ({ deal, priority = false, clas
           </div>
         </div>
 
-        <p className="text-stone-600 dark:text-stone-400 text-sm line-clamp-2 mb-3">
+        <p 
+          className="text-neutral-600 dark:text-neutral-400 text-sm line-clamp-2 mb-3"
+          style={{ minHeight: "2.5rem" }} // Reserve space for description
+        >
           {deal.description}
         </p>
 
@@ -95,22 +112,22 @@ export const DealCard: React.FC<DealCardProps> = ({ deal, priority = false, clas
             <span className="text-xl font-display font-semibold text-primary-600 dark:text-primary-400">
               ${deal.price}
             </span>
-            <span className="text-sm text-stone-500 dark:text-stone-500 line-through">
+            <span className="text-sm text-neutral-500 dark:text-neutral-500 line-through">
               ${deal.originalPrice}
             </span>
           </div>
         </div>
 
-        <div className="mt-3 pt-3 border-t border-stone-100 dark:border-stone-800 flex items-center justify-between text-sm">
+        <div className="mt-3 pt-3 border-t border-neutral-100 dark:border-neutral-800 flex items-center justify-between text-sm">
           <div 
-            className="flex items-center text-stone-500 dark:text-stone-400"
+            className="flex items-center text-neutral-500 dark:text-neutral-400"
             aria-label={`${deal.distance.toFixed(1)} kilometers away`}
           >
             <MapPin size={14} className="mr-1" aria-hidden="true" />
             <span>{deal.distance.toFixed(1)}km away</span>
           </div>
           <div 
-            className="flex items-center text-stone-500 dark:text-stone-400"
+            className="flex items-center text-neutral-500 dark:text-neutral-400"
             aria-label={`Expires ${formatDistanceToNow(new Date(deal.expiresAt))}`}
           >
             <Clock size={14} className="mr-1" aria-hidden="true" />
@@ -118,6 +135,6 @@ export const DealCard: React.FC<DealCardProps> = ({ deal, priority = false, clas
           </div>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 };

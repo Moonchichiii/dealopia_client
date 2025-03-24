@@ -1,32 +1,53 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Tag, LogIn, Menu, X, UserPlus, Store, MapPin } from 'lucide-react';
+import { Tag, LogIn, Menu, X, UserPlus, Store, MapPin, Sun, Moon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAuthModal } from '@/context/AuthModalContext';
+import { useAuth } from '@/context/AuthContext';
+import { useTheme } from '@/context/ThemeContext';
+import { cn } from '@/utils/cn';
 
-const Header: React.FC = () => {
-  const { i18n } = useTranslation();
+const Header = () => {
+  const { t, i18n } = useTranslation();
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [hasScrolled, setHasScrolled] = useState(false);
+  const { openSignIn, openSignUp } = useAuthModal();
+  const { isAuthenticated, user, logout } = useAuth();
+  const { isDarkMode, toggleTheme } = useTheme();
+  const [isLandscape, setIsLandscape] = useState(
+    window.matchMedia('(orientation: landscape) and (max-height: 500px)').matches
+  );
 
-  // Handle scroll
+  // Scroll handler
   useEffect(() => {
     const handleScroll = () => {
       const scrollPosition = window.scrollY;
-      setHasScrolled(scrollPosition > window.innerHeight * 0.03); // 3% of viewport height
+      setHasScrolled(scrollPosition > window.innerHeight * 0.03);
     };
 
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Close menu when route changes
+  // Detect landscape orientation on mobile
+  useEffect(() => {
+    const checkOrientation = () => {
+      setIsLandscape(
+        window.matchMedia('(orientation: landscape) and (max-height: 500px)').matches
+      );
+    };
+
+    window.addEventListener('resize', checkOrientation);
+    return () => window.removeEventListener('resize', checkOrientation);
+  }, []);
+
   useEffect(() => {
     setIsMenuOpen(false);
   }, [location.pathname]);
 
-  // Lock body scroll when menu is open
+  // Body scroll lock
   useEffect(() => {
     if (isMenuOpen) {
       document.body.style.overflow = 'hidden';
@@ -53,13 +74,26 @@ const Header: React.FC = () => {
     { name: 'About', href: '/about' },
   ];
 
+  if (isAuthenticated) {
+    navigation.push({ name: 'Dashboard', href: '/dashboard' });
+  }
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+  };
+
   return (
     <header 
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        hasScrolled 
-          ? 'bg-stone-950/20 backdrop-blur-xl border-b border-stone-800/50' 
-          : 'bg-transparent'
-      }`}
+      className="fixed top-0 left-0 right-0 z-40 transition-all duration-300"
+      style={{
+        background: hasScrolled ? 'rgba(10, 10, 10, 0.2)' : 'transparent',
+        backdropFilter: hasScrolled ? 'blur(12px)' : 'none',
+        borderBottom: hasScrolled ? '1px solid rgba(38, 38, 38, 0.5)' : 'none'
+      }}
     >
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
@@ -68,10 +102,18 @@ const Header: React.FC = () => {
             className="flex items-center space-x-2 group"
             aria-label="DealOpia Home"
           >
-            <div className="bg-primary-500/10 p-2 rounded-xl group-hover:bg-primary-500/20 transition-colors">
-              <Tag className="w-6 h-6 text-primary-400" aria-hidden="true" />
+            <div 
+              style={{ 
+                backgroundColor: 'rgba(139, 92, 246, 0.1)', 
+                padding: '0.5rem',
+                borderRadius: '0.75rem',
+                transition: 'background-color 0.2s'
+              }} 
+              className="group-hover:bg-[rgba(139,92,246,0.2)]"
+            >
+              <Tag className="w-6 h-6" style={{ color: '#a78bfa' }} aria-hidden="true" />
             </div>
-            <span className="text-xl font-display font-bold bg-gradient-to-r from-primary-400 to-accent-400 text-transparent bg-clip-text">
+            <span className="text-xl font-display font-bold gradient-text">
               DealOpia
             </span>
           </Link>
@@ -82,19 +124,27 @@ const Header: React.FC = () => {
               <Link
                 key={item.name}
                 to={item.href}
-                className={`text-sm font-medium transition-colors flex items-center gap-2 ${
-                  location.pathname === item.href
-                    ? 'text-primary-400'
-                    : 'text-stone-300 hover:text-white'
-                }`}
+                className="text-sm font-medium transition-colors flex items-center gap-2"
+                style={{ 
+                  color: location.pathname === item.href ? '#a78bfa' : '#d4d4d4',
+                }}
+                onMouseOver={(e) => e.currentTarget.style.color = '#a78bfa'}
+                onMouseOut={(e) => {
+                  if (location.pathname !== item.href) {
+                    e.currentTarget.style.color = '#d4d4d4';
+                  }
+                }}
               >
                 {item.icon && <item.icon size={16} />}
                 {item.name}
               </Link>
             ))}
             <button
-              className="flex items-center gap-2 text-sm font-medium text-stone-300 hover:text-white transition-colors"
+              className="flex items-center gap-2 text-sm font-medium transition-colors"
+              style={{ color: '#d4d4d4' }}
               onClick={() => {/* Handle location click */}}
+              onMouseOver={(e) => e.currentTarget.style.color = '#a78bfa'}
+              onMouseOut={(e) => e.currentTarget.style.color = '#d4d4d4'}
             >
               <MapPin size={16} />
               <span>Near Me</span>
@@ -102,53 +152,124 @@ const Header: React.FC = () => {
           </nav>
 
           <div className="hidden md:flex items-center gap-4">
-            <select
-              value={i18n.language}
-              onChange={(e) => i18n.changeLanguage(e.target.value)}
-              className="bg-stone-900/50 text-stone-300 border border-stone-800 rounded-lg px-3 py-1.5 text-sm font-medium focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500/50 cursor-pointer transition-all"
-              aria-label="Select language"
+            {/* Theme Toggle */}
+            <button
+              onClick={toggleTheme}
+              className="p-2 rounded-full hover:bg-[rgba(139,92,246,0.1)] transition-colors"
+              aria-label={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
             >
-              {languages.map((lang) => (
-                <option key={lang.code} value={lang.code} className="bg-stone-950">
-                  {lang.name}
-                </option>
-              ))}
-            </select>
+              {isDarkMode ? (
+                <Sun size={20} className="text-[#a78bfa]" />
+              ) : (
+                <Moon size={20} className="text-[#a78bfa]" />
+              )}
+            </button>
 
-            <Link
-              to="/signin"
-              className="flex items-center gap-2 bg-primary-500/10 hover:bg-primary-500/20 text-primary-400 px-4 py-2 rounded-lg transition-colors"
-            >
-              <LogIn size={18} aria-hidden="true" />
-              <span className="font-medium">Sign In</span>
-            </Link>
+            {/* Language selector */}
+            <div className="relative">
+              <select
+                value={i18n.language}
+                onChange={(e) => i18n.changeLanguage(e.target.value)}
+                style={{ 
+                  backgroundColor: 'rgba(23, 23, 23, 0.5)', 
+                  color: '#d4d4d4',
+                  border: '1px solid #404040',
+                  borderRadius: '0.5rem',
+                  padding: '0.375rem 2rem 0.375rem 0.75rem',
+                  fontSize: '0.875rem',
+                  fontWeight: 500,
+                  appearance: 'none',
+                  backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'%23d4d4d4\'%3E%3Cpath stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M19 9l-7 7-7-7\'%3E%3C/path%3E%3C/svg%3E")',
+                  backgroundRepeat: 'no-repeat',
+                  backgroundPosition: 'right 0.5rem center',
+                  backgroundSize: '1.25rem',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s'
+                }}
+                className="focus:outline-none focus:border-[#a78bfa] focus:ring-2 focus:ring-[rgba(139,92,246,0.2)]"
+                aria-label="Select language"
+              >
+                {languages.map((lang) => (
+                  <option 
+                    key={lang.code} 
+                    value={lang.code}
+                    className="bg-black text-gray-300"
+                  >
+                    {lang.name}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-            <Link
-              to="/signup"
-              className="flex items-center gap-2 bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-lg transition-colors"
-            >
-              <UserPlus size={18} aria-hidden="true" />
-              <span className="font-medium">Sign Up</span>
-            </Link>
+            {/* Auth buttons */}
+            {isAuthenticated ? (
+              <>
+                <Link
+                  to="/dashboard"
+                  className="flex items-center gap-2 bg-[rgba(139,92,246,0.1)] text-[#a78bfa] px-4 py-2 rounded-lg font-medium transition-colors hover:bg-[rgba(139,92,246,0.2)]"
+                >
+                  <span>{user?.first_name || 'Dashboard'}</span>
+                </Link>
+
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center gap-2 bg-[rgba(255,255,255,0.05)] text-[#d4d4d4] hover:text-white px-4 py-2 rounded-lg font-medium transition-colors hover:bg-[rgba(255,255,255,0.1)]"
+                >
+                  <span>Sign Out</span>
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={openSignIn}
+                  className="flex items-center gap-2 bg-[rgba(139,92,246,0.1)] text-[#a78bfa] px-4 py-2 rounded-lg font-medium transition-colors hover:bg-[rgba(139,92,246,0.2)]"
+                >
+                  <LogIn size={18} aria-hidden="true" />
+                  <span>Sign In</span>
+                </button>
+
+                <button
+                  onClick={openSignUp}
+                  className="flex items-center gap-2 bg-[#8b5cf6] hover:bg-[#7c3aed] text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                >
+                  <UserPlus size={18} aria-hidden="true" />
+                  <span>Sign Up</span>
+                </button>
+              </>
+            )}
           </div>
 
-          {/* Mobile Menu Button */}
-          <button
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="md:hidden p-2 rounded-lg bg-stone-900/50 hover:bg-stone-800/50 transition-colors"
-            aria-expanded={isMenuOpen}
-            aria-label="Toggle menu"
-          >
-            {isMenuOpen ? (
-              <X className="w-6 h-6 text-stone-300" aria-hidden="true" />
-            ) : (
-              <Menu className="w-6 h-6 text-stone-300" aria-hidden="true" />
-            )}
-          </button>
+          {/* Mobile Menu Button and Theme Toggle */}
+          <div className="flex md:hidden items-center gap-2">
+            <button
+              onClick={toggleTheme}
+              className="p-2 rounded-lg bg-[rgba(139,92,246,0.1)] transition-colors"
+              aria-label={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+            >
+              {isDarkMode ? (
+                <Sun size={18} className="text-[#a78bfa]" />
+              ) : (
+                <Moon size={18} className="text-[#a78bfa]" />
+              )}
+            </button>
+            
+            <button
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="p-2 rounded-lg bg-gray-900/50 hover:bg-gray-800/50 transition-colors"
+              aria-expanded={isMenuOpen}
+              aria-label="Toggle menu"
+            >
+              {isMenuOpen ? (
+                <X className="w-6 h-6 text-gray-300" aria-hidden="true" />
+              ) : (
+                <Menu className="w-6 h-6 text-gray-300" aria-hidden="true" />
+              )}
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Mobile Menu */}
+      {/* Mobile Menu - Optimized for landscape */}
       <AnimatePresence>
         {isMenuOpen && (
           <>
@@ -156,7 +277,7 @@ const Header: React.FC = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-stone-950/80 backdrop-blur-sm md:hidden"
+              className="fixed inset-0 bg-black/80 backdrop-blur-sm md:hidden"
               onClick={() => setIsMenuOpen(false)}
               aria-hidden="true"
             />
@@ -165,61 +286,193 @@ const Header: React.FC = () => {
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 20 }}
-              className="fixed right-0 top-0 bottom-0 w-3/4 max-w-sm bg-stone-900 border-l border-stone-800/50 md:hidden"
+              className={cn(
+                "fixed right-0 top-0 bottom-0 md:hidden flex flex-col",
+                isLandscape 
+                  ? "w-1/2 max-w-xs bg-gray-900/95 backdrop-blur-md border-l border-gray-800/50 overflow-y-auto" 
+                  : "w-3/4 max-w-xs bg-gray-900 border-l border-gray-800/50"
+              )}
+              style={{
+                height: isLandscape ? '100%' : 'auto',
+                maxHeight: '100%'
+              }}
             >
+              <div className="flex items-center justify-between p-4 border-b border-gray-800/50">
+                <div></div>
+                <button
+                  onClick={() => setIsMenuOpen(false)}
+                  className="p-1 rounded-lg hover:bg-gray-800/50 transition-colors"
+                  aria-label="Close menu"
+                >
+                  <X className="w-5 h-5 text-gray-400" aria-hidden="true" />
+                </button>
+              </div>
+              
               <div className="flex flex-col h-full overflow-y-auto">
-                <div className="p-4 border-b border-stone-800/50">
-                  <select
-                    value={i18n.language}
-                    onChange={(e) => i18n.changeLanguage(e.target.value)}
-                    className="w-full bg-stone-800/50 text-stone-300 border border-stone-700 rounded-lg px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500/50"
-                    aria-label="Select language"
-                  >
-                    {languages.map((lang) => (
-                      <option key={lang.code} value={lang.code} className="bg-stone-950">
-                        {lang.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <nav className="flex-1 p-4 space-y-2">
+                <nav className={cn(
+                  "flex-1 space-y-1",
+                  isLandscape ? "p-2" : "p-4 space-y-2"
+                )}>
                   {navigation.map((item) => (
                     <Link
                       key={item.name}
                       to={item.href}
-                      className={`flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-medium transition-colors ${
-                        location.pathname === item.href
-                          ? 'bg-primary-500/10 text-primary-400'
-                          : 'text-stone-300 hover:bg-stone-800/50 hover:text-white'
-                      }`}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        transition: 'all 0.2s',
+                        color: location.pathname === item.href ? '#a78bfa' : '#d4d4d4',
+                        backgroundColor: location.pathname === item.href ? 'rgba(139, 92, 246, 0.1)' : 'transparent',
+                        padding: isLandscape ? '0.5rem 0.75rem' : '0.75rem 1rem',
+                        borderRadius: '0.75rem',
+                        fontSize: isLandscape ? '0.8rem' : '0.875rem',
+                        fontWeight: 500
+                      }}
+                      className={
+                        location.pathname !== item.href ? 
+                        "hover:bg-[rgba(38,38,38,0.5)]" : ""
+                      }
+                      onMouseOver={(e) => {
+                        if (location.pathname !== item.href) {
+                          e.currentTarget.style.color = '#a78bfa';
+                        }
+                      }}
+                      onMouseOut={(e) => {
+                        if (location.pathname !== item.href) {
+                          e.currentTarget.style.color = '#d4d4d4';
+                        }
+                      }}
+                      onClick={() => setIsMenuOpen(false)}
                     >
-                      {item.icon && <item.icon size={18} />}
+                      {item.icon && <item.icon size={isLandscape ? 16 : 18} />}
                       {item.name}
                     </Link>
                   ))}
                   <button
-                    className="flex items-center gap-2 w-full px-4 py-3 rounded-xl text-sm font-medium text-stone-300 hover:bg-stone-800/50 hover:text-white transition-colors"
-                    onClick={() => {/* Handle location click */}}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      width: '100%',
+                      padding: isLandscape ? '0.5rem 0.75rem' : '0.75rem 1rem',
+                      borderRadius: '0.75rem',
+                      fontSize: isLandscape ? '0.8rem' : '0.875rem',
+                      fontWeight: 500,
+                      transition: 'colors 0.2s',
+                      color: '#d4d4d4',
+                      textAlign: 'left'
+                    }}
+                    className="hover:bg-[rgba(38,38,38,0.5)]"
+                    onClick={() => {
+                      setIsMenuOpen(false);
+                      /* Handle location click */
+                    }}
+                    onMouseOver={(e) => e.currentTarget.style.color = '#a78bfa'}
+                    onMouseOut={(e) => e.currentTarget.style.color = '#d4d4d4'}
                   >
-                    <MapPin size={18} />
+                    <MapPin size={isLandscape ? 16 : 18} />
                     <span>Near Me</span>
                   </button>
+                  
+                  {/* Language selector moved here */}
+                  <div className={cn(
+                    "pt-2",
+                    isLandscape ? "px-2" : "px-4"
+                  )}>
+                    <select
+                      value={i18n.language}
+                      onChange={(e) => i18n.changeLanguage(e.target.value)}
+                      className={cn(
+                        "w-full bg-gray-800/50 text-gray-300 border border-gray-700 rounded-lg text-sm font-medium appearance-none cursor-pointer transition-all focus:outline-none focus:border-[#a78bfa] focus:ring-2 focus:ring-[rgba(139,92,246,0.2)]", 
+                        isLandscape ? "py-1.5 pl-2 pr-6" : "py-2 pl-3 pr-8"
+                      )}
+                      aria-label="Select language"
+                      style={{
+                        backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'%23d4d4d4\'%3E%3Cpath stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M19 9l-7 7-7-7\'%3E%3C/path%3E%3C/svg%3E")',
+                        backgroundRepeat: 'no-repeat',
+                        backgroundPosition: 'right 0.5rem center',
+                        backgroundSize: '1rem'
+                      }}
+                    >
+                      {languages.map((lang) => (
+                        <option 
+                          key={lang.code} 
+                          value={lang.code}
+                          className="bg-black text-gray-300"
+                        >
+                          {lang.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </nav>
-                <div className="p-4 space-y-3 border-t border-stone-800/50">
-                  <Link
-                    to="/signin"
-                    className="flex items-center justify-center gap-2 w-full bg-primary-500/10 hover:bg-primary-500/20 text-primary-400 px-4 py-2 rounded-lg transition-colors"
-                  >
-                    <LogIn size={18} aria-hidden="true" />
-                    <span className="font-medium">Sign In</span>
-                  </Link>
-                  <Link
-                    to="/signup"
-                    className="flex items-center justify-center gap-2 w-full bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-lg transition-colors"
-                  >
-                    <UserPlus size={18} aria-hidden="true" />
-                    <span className="font-medium">Sign Up</span>
-                  </Link>
+
+                <div className={cn(
+                  "space-y-2 border-t border-gray-800/50",
+                  isLandscape ? "p-2" : "p-4 space-y-3"
+                )}>
+                  {isAuthenticated ? (
+                    <>
+                      <Link
+                        to="/dashboard"
+                        className="flex items-center justify-center gap-2 w-full bg-[rgba(139,92,246,0.1)] text-[#a78bfa] rounded-lg font-medium transition-colors hover:bg-[rgba(139,92,246,0.2)]"
+                        style={{
+                          padding: isLandscape ? '0.4rem 0.75rem' : '0.5rem 1rem',
+                          fontSize: isLandscape ? '0.8rem' : '0.875rem'
+                        }}
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        <span>
+                          {user?.first_name ? `${user.first_name}'s Dashboard` : 'Dashboard'}
+                        </span>
+                      </Link>
+                      <button
+                        onClick={() => {
+                          setIsMenuOpen(false);
+                          handleLogout();
+                        }}
+                        className="flex items-center justify-center gap-2 w-full bg-[rgba(255,255,255,0.05)] text-[#d4d4d4] rounded-lg font-medium transition-colors hover:bg-[rgba(255,255,255,0.1)]"
+                        style={{
+                          padding: isLandscape ? '0.4rem 0.75rem' : '0.5rem 1rem',
+                          fontSize: isLandscape ? '0.8rem' : '0.875rem'
+                        }}
+                      >
+                        <span>Sign Out</span>
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => {
+                          setIsMenuOpen(false);
+                          openSignIn();
+                        }}
+                        className="flex items-center justify-center gap-2 w-full bg-[rgba(139,92,246,0.1)] text-[#a78bfa] rounded-lg font-medium transition-colors hover:bg-[rgba(139,92,246,0.2)]"
+                        style={{
+                          padding: isLandscape ? '0.4rem 0.75rem' : '0.5rem 1rem',
+                          fontSize: isLandscape ? '0.8rem' : '0.875rem'
+                        }}
+                      >
+                        <LogIn size={isLandscape ? 16 : 18} aria-hidden="true" />
+                        <span>Sign In</span>
+                      </button>
+                      <button
+                        onClick={() => {
+                          setIsMenuOpen(false);
+                          openSignUp();
+                        }}
+                        className="flex items-center justify-center gap-2 w-full bg-[#8b5cf6] hover:bg-[#7c3aed] text-white rounded-lg font-medium transition-colors"
+                        style={{
+                          padding: isLandscape ? '0.4rem 0.75rem' : '0.5rem 1rem',
+                          fontSize: isLandscape ? '0.8rem' : '0.875rem'
+                        }}
+                      >
+                        <UserPlus size={isLandscape ? 16 : 18} aria-hidden="true" />
+                        <span>Sign Up</span>
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             </motion.div>

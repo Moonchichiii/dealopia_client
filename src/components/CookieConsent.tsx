@@ -1,97 +1,114 @@
-import React from 'react';
+import { FC, useState, useEffect } from 'react';
 import CookieConsentBanner from 'react-cookie-consent';
 import { useTranslation } from 'react-i18next';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
+import { X } from 'lucide-react';
 
-const CookieConsent: React.FC = () => {
+const CookieConsent: FC = () => {
   const { t } = useTranslation();
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  // Update isMobile state when window resizes
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   return (
     <AnimatePresence>
       <CookieConsentBanner
-        location="bottom"
+        location={isMobile ? "top" : "bottom"}
         buttonText={t('cookies.accept')}
         declineButtonText={t('cookies.decline')}
         cookieName="dealopia-cookie-consent"
         overlay={false}
         enableDeclineButton
         flipButtons
+        extraCookieOptions={{ path: '/' }}
         style={{
           background: "rgba(12, 10, 9, 0.95)",
           backdropFilter: "blur(10px)",
-          borderTop: "1px solid rgba(255, 255, 255, 0.1)",
+          border: "1px solid rgba(139, 92, 246, 0.2)",
           position: "fixed",
-          bottom: 0,
-          left: 0,
-          right: 0,
           zIndex: 40,
           padding: "1rem",
-          margin: 0,
-          '@media (min-width: 640px)': {
-            maxWidth: "400px",
-            right: "20px",
-            left: "auto",
-            margin: "0 0 20px 0",
-            borderRadius: "1rem",
-            padding: "1.5rem",
-          },
+          margin: "1rem",
+          width: "calc(100% - 2rem)",
+          maxWidth: "600px",
+          borderRadius: "1rem",
+          boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.2)",
+          transform: isMobile ? "none" : "translateX(-50%)",
+          left: isMobile ? "0" : "50%",
+          right: isMobile ? "0" : "auto",
+          bottom: isMobile ? "auto" : "1rem",
+          top: isMobile ? "1rem" : "auto",
         }}
         buttonStyle={{
-          background: "#843dff",
+          background: "#8b5cf6",
           color: "white",
-          borderRadius: "0.5rem",
-          padding: "0.5rem 1rem",
+          borderRadius: "0.75rem",
+          padding: "0.75rem 1.25rem",
           border: "none",
           cursor: "pointer",
-          fontWeight: "500",
+          fontWeight: "600",
           fontSize: "0.875rem",
           transition: "background-color 0.2s",
-          flex: 1,
-          '@media (min-width: 640px)': {
-            padding: "0.75rem 1.5rem",
-            flex: "none",
-            width: "100%",
-          },
+          flex: "1 1 auto",
+          minWidth: "120px",
         }}
         declineButtonStyle={{
-          background: "transparent",
-          border: "1px solid rgba(255, 255, 255, 0.1)",
-          color: "white",
-          borderRadius: "0.5rem",
-          padding: "0.5rem 1rem",
+          background: "rgba(255, 255, 255, 0.05)",
+          border: "1px solid rgba(139, 92, 246, 0.2)",
+          color: "#d4d4d4",
+          borderRadius: "0.75rem",
+          padding: "0.75rem 1.25rem",
           cursor: "pointer",
           fontWeight: "500",
           fontSize: "0.875rem",
           transition: "background-color 0.2s",
-          flex: 1,
-          '@media (min-width: 640px)': {
-            padding: "0.75rem 1.5rem",
-            flex: "none",
-            width: "100%",
-          },
+          flex: "1 1 auto",
+          minWidth: "120px",
         }}
         contentStyle={{
-          margin: "0 0 1rem",
+          margin: "0 0 1.25rem",
           padding: "0",
           fontSize: "0.875rem",
-          lineHeight: "1.4",
-          '@media (min-width: 640px)': {
-            margin: "0 0 1.5rem",
-            lineHeight: "1.5",
-          },
+          lineHeight: "1.5",
+          color: "white",
         }}
-        buttonWrapperClasses="flex flex-row sm:flex-col gap-2 sm:gap-3"
+        buttonWrapperClasses="flex flex-col sm:flex-row gap-3 w-full"
         expires={365}
         onAccept={() => {
-          // Enable necessary tracking
           console.log('Cookies accepted');
         }}
         onDecline={() => {
-          // Disable tracking
           console.log('Cookies declined');
         }}
       >
-        {t('cookies.message')}
+        <div className="relative pr-5">
+          <button 
+            onClick={() => {
+              document.querySelector('.CookieConsent')?.remove();
+            }}
+            className="absolute -top-2 -right-2 text-gray-400 hover:text-white bg-black/30 hover:bg-black/50 rounded-full p-1 transition-colors"
+            aria-label="Close cookie notice"
+          >
+            <X size={16} />
+          </button>
+          <h4 className="text-primary-400 font-semibold text-base mb-1">
+            {t('cookies.title', 'Cookie Settings')}
+          </h4>
+          <p className="mb-2 text-gray-200">
+            {t('cookies.message')}
+          </p>
+          <p className="text-xs text-gray-400 leading-tight">
+            Accepting cookies helps us personalize sustainable deals for you and improve your eco-friendly shopping experience.
+          </p>
+        </div>
       </CookieConsentBanner>
     </AnimatePresence>
   );

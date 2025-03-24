@@ -1,55 +1,41 @@
-import { useState, useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import apiClient, { updateAuthStatus } from '@/api/client';
-import Loader from './Loader';
+import { useAuth } from '@/context/AuthContext';
 
-const ProtectedRoute = ({ children }) => {
-  const [isLoading, setIsLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+interface ProtectedRouteProps {
+  children: React.ReactNode;
+  requireAuth?: boolean;
+}
+
+/**
+ * Redirects to login if user is not authenticated
+ */
+const ProtectedRoute = ({ 
+  children, 
+  requireAuth = true 
+}: ProtectedRouteProps) => {
+  const { isAuthenticated, isLoading } = useAuth();
   const location = useLocation();
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        // Check if auth cookies exist first to avoid unnecessary requests
-        const cookies = document.cookie.split(';');
-        const hasAuthCookie = cookies.some(cookie => 
-          cookie.trim().startsWith('auth-token=')
-        );
-        
-        if (!hasAuthCookie) {
-          setIsAuthenticated(false);
-          updateAuthStatus(false);
-          setIsLoading(false);
-          return;
-        }
-        
-        // Only make the API call if we have an auth cookie
-        const response = await apiClient.get('/auth/me/');
-        setIsAuthenticated(true);
-        updateAuthStatus(true);
-      } catch (error) {
-        console.error('Authentication check failed:', error);
-        setIsAuthenticated(false);
-        updateAuthStatus(false);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    checkAuth();
-  }, []);
-
   if (isLoading) {
-    return <Loader size="lg" message="Verifying authentication..." />;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-stone-950">
+        <div className="bg-stone-900/50 backdrop-blur-sm rounded-xl p-8 flex flex-col items-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-500 mb-4"></div>
+          <p className="text-stone-300">Verifying authentication...</p>
+        </div>
+      </div>
+    );
   }
 
-  if (!isAuthenticated) {
-    // Redirect to login with a return path
-    return <Navigate to="/login" state={{ from: location.pathname }} replace />;
+  if (!isAuthenticated && requireAuth) {
+    return <Navigate to="/signin" state={{ from: location.pathname }} replace />;
   }
 
-  return children;
+  if (isAuthenticated && !requireAuth) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return <>{children}</>;
 };
 
 export default ProtectedRoute;

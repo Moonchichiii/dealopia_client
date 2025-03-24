@@ -1,12 +1,11 @@
-import React from 'react';
 import { useRouteError, useNavigate } from 'react-router-dom';
 
-const ErrorBoundary: React.FC = () => {
+const ErrorBoundary = () => {
     const error = useRouteError();
     const navigate = useNavigate();
 
     const goBack = () => {
-        navigate(-1); // Go back to previous page
+        navigate(-1);
     };
     
     return (

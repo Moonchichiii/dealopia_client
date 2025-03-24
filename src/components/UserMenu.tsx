@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { User, Settings, LogOut, Heart, ShoppingBag } from 'react-feather';
 
@@ -19,12 +19,7 @@ const UserMenu: React.FC<UserMenuProps> = ({ user, onLogout }) => {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  // Toggle dropdown
-  const toggleDropdown = () => {
-    setIsOpen(!isOpen);
-  };
-
-  // Close dropdown when clicking outside
+  // Handle outside clicks
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
@@ -42,7 +37,7 @@ const UserMenu: React.FC<UserMenuProps> = ({ user, onLogout }) => {
     <div className="relative" ref={menuRef}>
       <button
         className="flex items-center gap-2 hover:text-[color:var(--color-accent-pink)] transition-colors"
-        onClick={toggleDropdown}
+        onClick={() => setIsOpen(!isOpen)}
         aria-expanded={isOpen}
         aria-haspopup="true"
       >

@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { authApi } from '@/api/services/auth';
 import { useMutation } from '@tanstack/react-query';
 
-const VerifyEmail: React.FC = () => {
+const VerifyEmail = () => {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const [verificationKey, setVerificationKey] = useState(searchParams.get('key') || '');

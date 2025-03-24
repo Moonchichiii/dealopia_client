@@ -1,4 +1,4 @@
-import React from 'react';
+import { useState } from 'react';
 import { useGeolocation } from '../hooks/useGeolocation';
 import DealMap from './DealMap';
 import { DealCard } from './DealCard';
@@ -53,14 +53,14 @@ const nearbyDeals: Deal[] = [
 
 const NearMeSection: React.FC = () => {
   const { latitude, longitude, loading } = useGeolocation();
-  const [selectedDeal, setSelectedDeal] = React.useState<string | null>(null);
+  const [selectedDeal, setSelectedDeal] = useState<string | null>(null);
 
   if (loading) {
     return (
       <section className="py-20" id="near-me">
         <div className="container mx-auto px-4">
           <div className="text-center">
-            <p className="text-stone-400">Getting your location...</p>
+            <p className="text-neutral-400">Getting your location...</p>
           </div>
         </div>
       </section>
@@ -72,7 +72,7 @@ const NearMeSection: React.FC = () => {
       <section className="py-20" id="near-me">
         <div className="container mx-auto px-4">
           <div className="text-center">
-            <p className="text-stone-400">Please enable location services to see deals near you.</p>
+            <p className="text-neutral-400">Please enable location services to see deals near you.</p>
           </div>
         </div>
       </section>
@@ -92,7 +92,7 @@ const NearMeSection: React.FC = () => {
               key={deal.id}
               deal={deal}
               priority={deal.id === selectedDeal}
-              className={deal.id === selectedDeal ? 'ring-2 ring-primary-500 ring-offset-4 ring-offset-stone-950' : ''}
+              className={deal.id === selectedDeal ? 'ring-2 ring-primary-500 ring-offset-4 ring-offset-neutral-950' : ''}
             />
           ))}
         </div>

@@ -1,83 +1,106 @@
-import { Suspense, useEffect, useState, useRef } from 'react';
+import { Suspense, useEffect, lazy, useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
-import Header from '@/components/layout/header';
-import Footer from '@/components/layout/Footer';
+import Header from '@/components/header';
 import Loader from '@/components/Loader';
-import LandingPage from '@/pages/landing/Landing';
+import AuthModal from '@/components/AuthModal';
+import { useAuthModal } from '@/context/AuthModalContext';
+import CookieConsent from '@/components/CookieConsent';
+import { useGSAP, ScrollTrigger } from '@/utils/useGsap';
 
-// Import GSAP
-import { useGSAP,ScrollTrigger } from '@/utils/useGsap';
+// Lazy load the Footer component
+const Footer = lazy(() => import('@/components/Footer'));
 
 const Layout = () => {
   const location = useLocation();
   const isHomePage = location.pathname === '/';
-  const [showContent, setShowContent] = useState(false);
-  const contentRef = useRef<HTMLDivElement>(null);
-  const layoutRef = useRef<HTMLDivElement>(null);
+  const { isAuthModalOpen, initialView, closeAuthModal } = useAuthModal();
+  const [showFooter, setShowFooter] = useState(false);
   
-  // Set up page background
+  // Background setup
   useEffect(() => {
-    document.body.style.backgroundColor = isHomePage ? '#0E0C15' : '';
+    if (isHomePage) {
+      document.body.classList.add('home-page');
+      document.body.style.background = 'linear-gradient(135deg, rgba(76, 29, 149, 0.3) 0%, #0a0a0a 50%, rgba(22, 78, 99, 0.3) 100%)';
+    } else {
+      document.body.classList.remove('home-page');
+      document.body.style.backgroundColor = '#0a0a0a';
+    }
     
     return () => {
+      document.body.classList.remove('home-page');
+      document.body.style.background = '';
       document.body.style.backgroundColor = '';
     };
   }, [isHomePage]);
 
-  // Initialize GSAP for the layout
+  // GSAP setup - avoid animations that cause layout shifts
   useGSAP(() => {
-    // Set up ScrollTrigger config
     ScrollTrigger.config({
       autoRefreshEvents: 'visibilitychange,DOMContentLoaded,load,resize'
     });
     
     return () => {
-      // Clean up all ScrollTrigger instances when the layout unmounts
       ScrollTrigger.getAll().forEach(trigger => trigger.kill());
     };
   }, []);
 
-  // Function to handle scroll down to content
-  const handleExploreClick = () => {
-    setShowContent(true);
-    
-    // Ensure content is rendered before scrolling
-    setTimeout(() => {
-      if (contentRef.current) {
-        window.scrollTo({
-          top: window.innerHeight,
-          behavior: 'smooth'
-        });
-      }
-    }, 100);
-  };
+  // Intersection Observer for lazy loading the footer
+  useEffect(() => {
+    // Create observer to detect when we approach the footer placeholder
+    const footerObserver = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setShowFooter(true);
+          footerObserver.disconnect();
+        }
+      },
+      { rootMargin: '200px' } // Start loading when within 200px
+    );
+
+    // Start observing the footer placeholder
+    const footerPlaceholder = document.getElementById('footer-placeholder');
+    if (footerPlaceholder) {
+      footerObserver.observe(footerPlaceholder);
+    }
+
+    return () => {
+      footerObserver.disconnect();
+    };
+  }, []);
 
   return (
-    <div ref={layoutRef} className="min-h-screen flex flex-col relative">
-      {isHomePage && !showContent ? (
-        // Show landing page for homepage when content is not revealed
-        <LandingPage onExploreClick={handleExploreClick} />
-      ) : (
-        // Regular site layout after user scrolls down or on other pages
-        <>
-          {/* Header is outside the main content flow */}
-          <Header />
-          
-          <main
-            ref={contentRef}
-            className="flex-grow w-full"
-            style={{
-              paddingTop: isHomePage ? "0" : ""
-            }}
-          >
-            <Suspense fallback={<Loader progress={50} />}>
-              <Outlet />
-            </Suspense>
-          </main>
-          
+    <div className="min-h-screen flex flex-col relative text-gray-100">
+      <Header />
+      
+      <main
+        className={`flex-grow w-full ${isHomePage ? 'p-0' : 'pt-16 px-4'}`}
+      >
+        <Suspense fallback={<Loader progress={50} />}>
+          <Outlet />
+        </Suspense>
+      </main>
+      
+      {/* Footer placeholder with reserved space */}
+      <div 
+        id="footer-placeholder" 
+        className="footer-placeholder"
+        style={{ display: showFooter ? 'none' : 'block' }}
+      />
+      
+      {/* Actual footer that loads on demand */}
+      {showFooter && (
+        <Suspense fallback={<div className="footer-placeholder" />}>
           <Footer />
-        </>
+        </Suspense>
       )}
+
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={closeAuthModal}
+        initialView={initialView}
+      />
+      
+      <CookieConsent />
     </div>
   );
 };
