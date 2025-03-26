@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import { Icon } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { Deal } from '@/types/deal';
+import { Deal } from '@/types/deals';
 import { useGeolocation } from '@/hooks/useGeolocation';
 
 

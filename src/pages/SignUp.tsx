@@ -1,11 +1,11 @@
 // src/pages/SignUp.tsx
 import React, { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '@/context/AuthContext';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { UserPlus, Github, Facebook } from 'lucide-react';
 import gsap from 'gsap';
+import { useRegister, useUser } from '@/hooks/useAuth';
 
 // Form validation schema
 const signUpSchema = z.object({
@@ -34,17 +34,26 @@ interface SignUpProps {
 const SignUp: React.FC<SignUpProps> = ({ isModal = false, onToggleView, onSuccess }) => {
   const formRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
-  const { register: registerUser, isAuthenticated, isLoading } = useAuth();
+  const { register: registerUser, isLoading: isRegisterLoading, error: registerError } = useRegister();
+  const { data: user } = useUser();
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  
+  const isAuthenticated = !!user;
   
   // Initialize form with react-hook-form
   const { 
     register, 
     handleSubmit, 
-    watch,
     formState: { errors, isSubmitting }
   } = useForm<SignUpFormData>();
+
+  // Update error state when register error changes
+  useEffect(() => {
+    if (registerError) {
+      setSubmitError(registerError.toString());
+    }
+  }, [registerError]);
 
   // Submit handler
   const onSubmit = async (data: SignUpFormData) => {
@@ -54,7 +63,7 @@ const SignUp: React.FC<SignUpProps> = ({ isModal = false, onToggleView, onSucces
       // Exclude terms from the data sent to API
       const { terms, ...registerData } = data;
       
-      await registerUser(registerData);
+      const response = await registerUser(registerData);
       setSuccess(true);
       
       if (isModal && onSuccess) {
@@ -62,6 +71,8 @@ const SignUp: React.FC<SignUpProps> = ({ isModal = false, onToggleView, onSucces
           onSuccess();
         }, 3000); // Auto close after 3 seconds if in modal mode
       }
+      
+      return response;
       
     } catch (error: any) {
       setSubmitError(error.message || 'Failed to sign up. Please try again.');
@@ -71,7 +82,6 @@ const SignUp: React.FC<SignUpProps> = ({ isModal = false, onToggleView, onSucces
   // Social login handlers
   const handleGoogleLogin = async () => {
     try {
-      // Replace with your actual social login implementation
       await registerUser({ provider: 'google' });
       if (isModal && onSuccess) {
         onSuccess();
@@ -83,7 +93,6 @@ const SignUp: React.FC<SignUpProps> = ({ isModal = false, onToggleView, onSucces
 
   const handleFacebookLogin = async () => {
     try {
-      // Replace with your actual social login implementation
       await registerUser({ provider: 'facebook' });
       if (isModal && onSuccess) {
         onSuccess();
@@ -95,7 +104,6 @@ const SignUp: React.FC<SignUpProps> = ({ isModal = false, onToggleView, onSucces
 
   const handleGithubLogin = async () => {
     try {
-      // Replace with your actual social login implementation
       await registerUser({ provider: 'github' });
       if (isModal && onSuccess) {
         onSuccess();
@@ -299,10 +307,10 @@ const SignUp: React.FC<SignUpProps> = ({ isModal = false, onToggleView, onSucces
 
           <button
             type="submit"
-            disabled={isSubmitting || isLoading}
+            disabled={isSubmitting || isRegisterLoading}
             className="form-element w-full bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 mt-6"
           >
-            {isSubmitting || isLoading ? (
+            {isSubmitting || isRegisterLoading ? (
               <>
                 <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>

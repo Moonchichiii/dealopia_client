@@ -1,77 +1,58 @@
-import axios from 'axios';
+// src/api/client.ts - UPDATE THIS FILE, DON'T CREATE A NEW ONE
+import axios, { AxiosError, AxiosInstance, AxiosRequestConfig } from 'axios';
 
-// Create axios instance
-const apiClient = axios.create({
-  baseURL: '/api/v1',
-  timeout: 15000, 
+// Fix 1: Set baseURL to environment variable without adding /api/v1 (already in proxy)
+const baseURL = import.meta.env.VITE_API_URL || '';
+
+// Create the API client
+const apiClient: AxiosInstance = axios.create({
+  baseURL,
+  timeout: 15000,
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true, // Important for cookie-based auth
 });
 
-// Track authentication state
-let isAuthenticated = false;
+// Get CSRF token
+function getCsrfToken(): string | null {
+  return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || null;
+}
 
-// Request interceptor for authentication
-apiClient.interceptors.request.use((config) => {
-  const isAuthEndpoint = config.url?.includes('/auth/');
-  
-  if (isAuthenticated || isAuthEndpoint) {
-    config.withCredentials = true;
-    
-    if (config.method !== 'get') {
-      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-      if (csrfToken) {
-        config.headers['X-CSRFToken'] = csrfToken;
-      }
+// Request interceptor
+apiClient.interceptors.request.use((config: AxiosRequestConfig): AxiosRequestConfig => {
+  // Add CSRF token for non-GET requests
+  if (config.method !== 'get') {
+    const csrfToken = getCsrfToken();
+    if (csrfToken) {
+      config.headers = {
+        ...config.headers,
+        'X-CSRFToken': csrfToken
+      };
     }
   }
-  
+
   return config;
 });
 
-// Response interceptor for error handling
+// Response interceptor for handling 401s
 apiClient.interceptors.response.use(
   (response) => response,
-  async (error) => {
-    const originalRequest = error.config;
+  async (error: AxiosError) => {
+    const originalRequest = error.config as any;
     
-    if (!originalRequest) {
-      return Promise.reject(error);
-    }
-
-    if (originalRequest._retry) {
+    if (!originalRequest || originalRequest._retry) {
       return Promise.reject(error);
     }
     
-    if (isAuthenticated && error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
-      
-      try {
-        await apiClient.post('/auth/token/refresh/');
-        return apiClient(originalRequest);
-      } catch (refreshError) {
-        window.location.href = '/signin';
-        return Promise.reject(refreshError);
-      }
-    }
-    
-    if (error.response?.status === 403) {
-      console.error('Permission denied:', error.response.data);
-    }
-    
-    if (error.response?.status === 500) {
-      console.error('Server error:', error.response.data);
+    // Handle 401 by redirecting to login
+    if (error.response?.status === 401) {
+      // Could trigger a redirect to login page here if needed
+      // window.location.href = '/signin';
     }
     
     return Promise.reject(error);
   }
 );
-
-export const updateAuthStatus = (status: boolean) => {
-  isAuthenticated = status;
-};
-
-export const getAuthStatus = () => isAuthenticated;
 
 export default apiClient;

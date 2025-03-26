@@ -1,34 +1,42 @@
-import { Location } from './locations';
-import { Category } from './categories';
-
 export interface UserProfile {
-  id: number;
-  username: string;
+  id: string;
   email: string;
   first_name: string;
   last_name: string;
-  phone_number: string;
-  avatar: string | null;
-  preferred_language: string;
-  location: Location | null;
-  favorite_categories: Category[];
-  notification_preferences: Record<string, boolean>;
+  phone_number?: string;
+  avatar?: string;
+  preferred_language?: string;
+  location?: number | Location;
+  favorite_categories?: number[] | Category[];
+  notification_preferences?: Record<string, any>;
+  has_2fa_enabled?: boolean;
+  date_joined?: string;
+  last_login?: string;
+  sustainability_preference?: number;
 }
 
 export interface LoginCredentials {
-  username?: string;
-  email?: string;
+  email: string;
   password: string;
+  remember?: boolean;
 }
 
 export interface RegisterData {
-  username?: string;
   email: string;
   password: string;
   password_confirm: string;
-  first_name?: string;
-  last_name?: string;
+  first_name: string;
+  last_name: string;
   phone_number?: string;
+  preferred_language?: string;
+  provider?: 'google' | 'facebook' | 'github'; // For social registrations
+}
+
+export interface AuthState {
+  isAuthenticated: boolean;
+  user: UserProfile | null;
+  error: string | null;
+  isLoading: boolean;
 }
 
 export interface AuthTokens {
@@ -36,26 +44,29 @@ export interface AuthTokens {
   refresh: string;
 }
 
-export interface AuthState {
-  isAuthenticated: boolean;
-  user: UserProfile | null;
-  isLoading: boolean;
-  error: AuthError | null;
-}
-
-export interface AuthError {
+export interface TwoFactorAuthResponse {
+  requires_2fa: boolean;
+  user_id: string;
   message: string;
-  code?: string;
-  fieldErrors?: Record<string, string[]>;
 }
 
-export interface ResetPasswordData {
-  uid: string;
+export interface TwoFactorSetupResponse {
+  qr_code: string;
+  secret: string;
+  instructions: string;
+}
+
+export interface PasswordResetRequest {
+  email: string;
+}
+
+export interface PasswordResetConfirm {
   token: string;
   new_password1: string;
   new_password2: string;
 }
 
-export interface ForgotPasswordData {
-  email: string;
+export interface EmailChangeRequest {
+  new_email: string;
+  password: string;
 }

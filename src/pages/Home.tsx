@@ -6,9 +6,9 @@ import { DealCard } from '@/components/DealCard';
 import SearchBar from '@/components/SearchBar';
 
 // Lazy load components
-const AboutSection = lazy(() => import('@/components/AboutSection'));
-const ShopsSection = lazy(() => import('@/components/ShopsSection'));
-const NearMeSection = lazy(() => import('@/components/NearMeSection'));
+const AboutSection = lazy(() => import('@/components/sections/AboutSection'));
+const ShopsSection = lazy(() => import('@/components/sections/ShopsSection'));
+const NearMeSection = lazy(() => import('@/components/sections/NearMeSection'));
 
 interface Deal {
   id: string;
@@ -159,17 +159,13 @@ const Home: React.FC = () => {
               Sustainable Shopping,{' '}
               <span className="gradient-text">Better Future</span>
             </h1>
-            <p 
-  className="text-lg md:text-xl text-gray-200 mb-8 max-w-2xl mx-auto min-h-description font-inter gpu-accelerated" 
-  style={{ 
-    fontDisplay: 'swap',
-    willChange: 'opacity',
-    contentVisibility: 'auto',
-    containIntrinsicSize: '0 2.5rem'
-  }}
+<p 
+  className="hidden md:block text-lg md:text-xl text-gray-200 mb-8 max-w-2xl mx-auto font-inter" 
 >
   Join our community of conscious shoppers and discover amazing local deals while making a positive impact on the environment.
 </p>
+
+
             <SearchBar 
               onSearch={handleSearch}
               className="max-w-2xl mx-auto"

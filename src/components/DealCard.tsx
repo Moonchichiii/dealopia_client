@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { MapPin, Leaf, Clock } from 'lucide-react';
-import { Deal } from '../types/deal';
+import { Deal } from '../types/deals';
 import { formatDistanceToNow } from '../utils/date';
 import { cn } from '../utils/cn';
 

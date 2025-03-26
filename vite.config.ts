@@ -65,7 +65,7 @@ export default defineConfig({
       overlay: true,
     },
     proxy: {
-      '/api': {
+      '/api/v1': {
         target: 'http://127.0.0.1:8000',
         changeOrigin: true,
         secure: false,
@@ -85,12 +85,13 @@ export default defineConfig({
         },
       },
       
-      '/auth': {
+      '/api/v1/auth': {
         target: 'http://127.0.0.1:8000',
         changeOrigin: true,
         secure: false,
         ws: true,
       },
+      
       '/accounts': {
         target: 'http://127.0.0.1:8000',
         changeOrigin: true,
@@ -157,4 +158,3 @@ export default defineConfig({
     host: true,
   }
 })
-

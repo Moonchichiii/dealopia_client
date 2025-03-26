@@ -1,26 +1,27 @@
+// src/pages/dashboard/Dashboard.tsx
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Store, BarChart as ChartBar, Package, Users, Settings, CreditCard } from 'lucide-react';
-import { useAuth } from '@/context/AuthContext';
+import { useUser } from '@/hooks/useAuth';
 
 const Dashboard = () => {
-  const { user, isAuthenticated } = useAuth();
+  const { data: user, isLoading } = useUser();
   const navigate = useNavigate();
   const [userRole, setUserRole] = useState<'customer' | 'shopkeeper'>('customer');
 
-  // Authentication check
-  useEffect(() => {
-    if (!isAuthenticated) {
-      navigate('/signin');
-    }
-  }, [isAuthenticated, navigate]);
-
-  // Set user role
+  // Set user role when data is loaded
   useEffect(() => {
     if (user?.notification_preferences?.role === 'shopkeeper') {
       setUserRole('shopkeeper');
     }
   }, [user]);
+
+  // Redirect if not authenticated
+  useEffect(() => {
+    if (!isLoading && !user) {
+      navigate('/signin');
+    }
+  }, [isLoading, user, navigate]);
 
   const customerMenuItems = [
     { icon: Package, label: 'My Orders', href: '/dashboard/orders' },
@@ -39,7 +40,22 @@ const Dashboard = () => {
 
   const menuItems = userRole === 'shopkeeper' ? shopkeeperMenuItems : customerMenuItems;
 
-  if (!isAuthenticated) {
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen pt-16 flex items-center justify-center">
+        <div className="bg-neutral-900/50 backdrop-blur-sm rounded-2xl p-8 border border-neutral-800/50">
+          <div className="flex flex-col items-center">
+            <div className="w-12 h-12 rounded-full border-4 border-primary-500 border-t-transparent animate-spin mb-4"></div>
+            <p className="text-neutral-400">Loading dashboard...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Guard clause: if no user data is available, don't render
+  if (!user) {
     return null;
   }
 
@@ -53,11 +69,11 @@ const Dashboard = () => {
               <div className="flex items-center space-x-3 mb-6">
                 <div className="w-12 h-12 rounded-full bg-primary-500/10 flex items-center justify-center">
                   <span className="text-xl font-semibold text-primary-400">
-                    {user?.email?.[0].toUpperCase()}
+                    {user.email?.[0].toUpperCase()}
                   </span>
                 </div>
                 <div>
-                  <h3 className="font-semibold text-white">{user?.email}</h3>
+                  <h3 className="font-semibold text-white">{user.email}</h3>
                   <p className="text-sm text-neutral-400 capitalize">{userRole}</p>
                 </div>
               </div>

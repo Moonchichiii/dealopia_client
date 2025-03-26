@@ -23,6 +23,17 @@ persistQueryClient({
   queryClient,
   persister,
   maxAge: 1000 * 60 * 60 * 24,
+  // Add this dehydrateOptions configuration
+  dehydrateOptions: {
+    shouldDehydrateQuery: (query) => {
+      // Don't persist auth queries to storage
+      const queryKey = query.queryKey;
+      if (Array.isArray(queryKey) && queryKey[0] === 'auth') {
+        return false;
+      }
+      return true;
+    }
+  }
 });
 
 export { queryClient, QueryClientProvider };

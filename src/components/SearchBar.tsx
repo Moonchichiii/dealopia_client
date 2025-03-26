@@ -1,8 +1,8 @@
 import { useState, useRef } from 'react';
 import { Search, Filter, X, MapPin } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { useGeolocation } from '../hooks/useGeolocation';
-import { cn } from '../utils/cn';
+import { useGeolocation } from '@/hooks/useGeolocation';
+import { cn } from '@/utils/cn';
 
 interface SearchBarProps {
   onSearch: (query: string, filters?: Record<string, any>) => void;

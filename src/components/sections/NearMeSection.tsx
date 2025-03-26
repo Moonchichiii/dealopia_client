@@ -1,10 +1,17 @@
-import { useState } from 'react';
-import { useGeolocation } from '../hooks/useGeolocation';
-import DealMap from './DealMap';
-import { DealCard } from './DealCard';
-import { Deal } from '../types/deal';
+import { useCallback, useMemo, useState } from 'react';
 
-const nearbyDeals: Deal[] = [
+// Internal hooks
+import { useGeolocation } from '../../hooks/useGeolocation';
+
+// Internal components
+import { DealCard } from '../DealCard';
+import DealMap from '../DealMap';
+
+// Types
+import { Deal } from '../../types/deals';
+
+// Mock data (should eventually be moved to a separate file)
+const NEARBY_DEALS: Deal[] = [
   {
     id: '1',
     title: 'Organic Cotton T-Shirt',
@@ -51,32 +58,45 @@ const nearbyDeals: Deal[] = [
   },
 ];
 
+const LoadingView = () => (
+  <section className="py-20" id="near-me">
+    <div className="container mx-auto px-4">
+      <div className="text-center">
+        <p className="text-neutral-400">Getting your location...</p>
+      </div>
+    </div>
+  </section>
+);
+
+const LocationPermissionView = () => (
+  <section className="py-20" id="near-me">
+    <div className="container mx-auto px-4">
+      <div className="text-center">
+        <p className="text-neutral-400">Please enable location services to see deals near you.</p>
+      </div>
+    </div>
+  </section>
+);
+
 const NearMeSection: React.FC = () => {
   const { latitude, longitude, loading } = useGeolocation();
   const [selectedDeal, setSelectedDeal] = useState<string | null>(null);
 
+  // Use memoized handler for deal selection
+  const handleDealSelect = useCallback((deal: Deal) => {
+    setSelectedDeal(deal.id);
+    const dealElement = document.getElementById(`deal-${deal.id}`);
+    if (dealElement) {
+      dealElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, []);
+
   if (loading) {
-    return (
-      <section className="py-20" id="near-me">
-        <div className="container mx-auto px-4">
-          <div className="text-center">
-            <p className="text-neutral-400">Getting your location...</p>
-          </div>
-        </div>
-      </section>
-    );
+    return <LoadingView />;
   }
 
   if (!latitude || !longitude) {
-    return (
-      <section className="py-20" id="near-me">
-        <div className="container mx-auto px-4">
-          <div className="text-center">
-            <p className="text-neutral-400">Please enable location services to see deals near you.</p>
-          </div>
-        </div>
-      </section>
-    );
+    return <LocationPermissionView />;
   }
 
   return (
@@ -87,27 +107,25 @@ const NearMeSection: React.FC = () => {
         </h2>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          {nearbyDeals.map((deal) => (
+          {NEARBY_DEALS.map((deal) => (
             <DealCard
               key={deal.id}
               deal={deal}
               priority={deal.id === selectedDeal}
-              className={deal.id === selectedDeal ? 'ring-2 ring-primary-500 ring-offset-4 ring-offset-neutral-950' : ''}
+              className={
+                deal.id === selectedDeal 
+                  ? 'ring-2 ring-primary-500 ring-offset-4 ring-offset-neutral-950' 
+                  : ''
+              }
             />
           ))}
         </div>
 
         <DealMap
-          deals={nearbyDeals}
+          deals={NEARBY_DEALS}
           height="500px"
           className="rounded-2xl overflow-hidden shadow-xl"
-          onDealSelect={(deal) => {
-            setSelectedDeal(deal.id);
-            const dealElement = document.getElementById(`deal-${deal.id}`);
-            if (dealElement) {
-              dealElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-          }}
+          onDealSelect={handleDealSelect}
         />
       </div>
     </section>

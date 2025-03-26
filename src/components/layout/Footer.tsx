@@ -1,23 +1,20 @@
 import { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { Tag, Github, Twitter } from 'lucide-react';
+// Third-party imports
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { Github, Tag, Twitter } from 'lucide-react';
 
 gsap.registerPlugin(ScrollTrigger);
 
-const Footer = () => {
-  const footerRef = useRef(null);
-
+// Custom hook for footer animation
+const useFooterAnimation = (footerRef: React.RefObject<HTMLElement>) => {
   useEffect(() => {
-    // Create a timeline for the animation
     const ctx = gsap.context(() => {
-      // Important: Animate opacity ONLY, not position properties
       const footerItems = footerRef.current?.querySelectorAll('.footer-item');
       
       if (footerItems) {
-        gsap.set(footerItems, { opacity: 0 }); // Pre-set the opacity to avoid flashing
-        
+        gsap.set(footerItems, { opacity: 0 });
         gsap.to(footerItems, {
           opacity: 1,
           duration: 0.8,
@@ -33,13 +30,60 @@ const Footer = () => {
     });
 
     return () => ctx.revert();
-  }, []);
+  }, [footerRef]);
+};
+
+// Footer link item type
+type FooterLinkProps = {
+  to: string;
+  label: string;
+};
+
+const FooterLink = ({ to, label }: FooterLinkProps) => (
+  <li>
+    <Link to={to} className="text-neutral-400 hover:text-white transition-colors">
+      {label}
+    </Link>
+  </li>
+);
+
+// Footer link section component
+type FooterSectionProps = {
+  title: string;
+  links: FooterLinkProps[];
+};
+
+const FooterSection = ({ title, links }: FooterSectionProps) => (
+  <div className="footer-item">
+    <h3 className="font-display font-semibold text-white mb-4">{title}</h3>
+    <ul className="space-y-2">
+      {links.map((link) => (
+        <FooterLink key={link.to} to={link.to} label={link.label} />
+      ))}
+    </ul>
+  </div>
+);
+
+const Footer: React.FC = () => {
+  const footerRef = useRef<HTMLElement>(null);
+  useFooterAnimation(footerRef);
+
+  const companyLinks = [
+    { to: "/about", label: "About Us" },
+    { to: "/privacy", label: "Privacy Policy" },
+    { to: "/terms", label: "Terms of Service" }
+  ];
+
+  const supportLinks = [
+    { to: "/faq", label: "FAQ" },
+    { to: "/contact", label: "Contact Us" },
+    { to: "/help", label: "Help Center" }
+  ];
 
   return (
     <footer 
       ref={footerRef} 
       className="border-t border-neutral-800/50 bg-neutral-950/50 backdrop-blur-xl"
-      // Set explicit minimum height to reserve space and prevent CLS
       style={{ minHeight: '350px' }}
     >
       <div className="container mx-auto px-4 py-12">
@@ -58,47 +102,8 @@ const Footer = () => {
             </p>
           </div>
 
-          <div className="footer-item">
-            <h3 className="font-display font-semibold text-white mb-4">Company</h3>
-            <ul className="space-y-2">
-              <li>
-                <Link to="/about" className="text-neutral-400 hover:text-white transition-colors">
-                  About Us
-                </Link>
-              </li>
-              <li>
-                <Link to="/privacy" className="text-neutral-400 hover:text-white transition-colors">
-                  Privacy Policy
-                </Link>
-              </li>
-              <li>
-                <Link to="/terms" className="text-neutral-400 hover:text-white transition-colors">
-                  Terms of Service
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          <div className="footer-item">
-            <h3 className="font-display font-semibold text-white mb-4">Support</h3>
-            <ul className="space-y-2">
-              <li>
-                <Link to="/faq" className="text-neutral-400 hover:text-white transition-colors">
-                  FAQ
-                </Link>
-              </li>
-              <li>
-                <Link to="/contact" className="text-neutral-400 hover:text-white transition-colors">
-                  Contact Us
-                </Link>
-              </li>
-              <li>
-                <Link to="/help" className="text-neutral-400 hover:text-white transition-colors">
-                  Help Center
-                </Link>
-              </li>
-            </ul>
-          </div>
+          <FooterSection title="Company" links={companyLinks} />
+          <FooterSection title="Support" links={supportLinks} />
 
           <div className="footer-item">
             <h3 className="font-display font-semibold text-white mb-4">Follow Us</h3>
