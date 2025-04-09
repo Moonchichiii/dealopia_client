@@ -1,13 +1,8 @@
-// React/framework imports
 import { createPortal } from 'react-dom';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-
-// Third-party libraries
 import { X } from 'lucide-react';
-
-// Internal components/utilities
-import SignIn from '@/pages/SignIn';
-import SignUp from '@/pages/SignUp';
+import SignIn from '@/components/auth/SignIn';
+import SignUp from '@/components/auth/SignUp';
 
 interface AuthModalProps {
     isOpen: boolean;
@@ -15,10 +10,10 @@ interface AuthModalProps {
     initialView?: 'signIn' | 'signUp';
 }
 
-const AuthModal: React.FC<AuthModalProps> = ({ 
-    isOpen, 
-    onClose, 
-    initialView = 'signIn' 
+const AuthModal: React.FC<AuthModalProps> = ({
+    isOpen,
+    onClose,
+    initialView = 'signIn'
 }) => {
     const [view, setView] = useState<'signIn' | 'signUp'>(initialView);
     
@@ -55,7 +50,7 @@ const AuthModal: React.FC<AuthModalProps> = ({
     return createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div 
-                className="absolute inset-0 bg-black/80 backdrop-blur-sm" 
+                className="absolute inset-0 bg-black/80 backdrop-blur-sm"
                 onClick={onClose}
             />
             
@@ -71,15 +66,15 @@ const AuthModal: React.FC<AuthModalProps> = ({
                     <div className="pt-10">
                         {view === 'signIn' ? (
                             <SignIn 
-                                isModal 
-                                onToggleView={toggleView} 
-                                onSuccess={handleSuccess} 
+                                isModal
+                                onToggleView={toggleView}
+                                onSuccess={handleSuccess}
                             />
                         ) : (
                             <SignUp 
-                                isModal 
-                                onToggleView={toggleView} 
-                                onSuccess={handleSuccess} 
+                                isModal
+                                onToggleView={toggleView}
+                                onSuccess={handleSuccess}
                             />
                         )}
                     </div>
@@ -110,9 +105,9 @@ export const useAuthModal = () => {
     
     const authModalElement = useMemo(() => (
         <AuthModal 
-            isOpen={isOpen} 
-            onClose={closeModal} 
-            initialView={initialView} 
+            isOpen={isOpen}
+            onClose={closeModal}
+            initialView={initialView}
         />
     ), [isOpen, closeModal, initialView]);
     

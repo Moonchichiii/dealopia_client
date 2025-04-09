@@ -1,31 +1,53 @@
-import { 
-  useQuery, 
-  useInfiniteQuery, 
-  useMutation, 
-  useQueryClient 
+import {
+  useQuery,
+  useInfiniteQuery,
+  useMutation,
+  useQueryClient
 } from '@tanstack/react-query';
-import { dealsApi } from '@/api';
-import { Deal, DealFilters } from '@/types/deals';
 import { toast } from 'react-toastify';
+import dealService from '@/api/services/dealService';
+import { Deal, DealFilters } from '@/types/deals';
 
-/** Fetch paginated deals with filters */
-export const useDeals = (params?: DealFilters) => {
+// Query key factory for better cache management
+const dealKeys = {
+  all: ['deals'] as const,
+  lists: () => [...dealKeys.all, 'list'] as const,
+  list: (filters: DealFilters = {}) => [...dealKeys.lists(), filters] as const,
+  details: () => [...dealKeys.all, 'detail'] as const,
+  detail: (id: string | number) => [...dealKeys.details(), id] as const,
+  featured: () => [...dealKeys.all, 'featured'] as const,
+  nearby: (lat?: number, lng?: number, radius?: number) =>
+    [...dealKeys.all, 'nearby', lat, lng, radius] as const,
+  ending: () => [...dealKeys.all, 'ending-soon'] as const,
+  search: (query: string) => [...dealKeys.all, 'search', query] as const,
+  favorites: () => [...dealKeys.all, 'favorites'] as const,
+};
+
+/**
+ * Hook for fetching paginated deals with filters
+ */
+export const useDeals = (filters?: DealFilters) => {
   return useQuery({
-    queryKey: ['deals', params],
-    queryFn: () => dealsApi.getDeals(params),
+    queryKey: dealKeys.list(filters),
+    queryFn: () => dealService.getDeals(filters),
     keepPreviousData: true,
+    staleTime: 60 * 1000, // 1 minute cache
   });
 };
 
-/** Fetch infinite scrolling deals list */
+/**
+ * Hook for fetching infinite scrolling deals list
+ * Efficient for browsing large datasets
+ */
 export const useInfiniteDeals = (filters?: DealFilters) => {
   return useInfiniteQuery({
-    queryKey: ['deals', 'infinite', filters],
+    queryKey: [...dealKeys.lists(), 'infinite', filters],
     queryFn: async ({ pageParam = 1 }) => {
-      const response = await dealsApi.getDeals({
+      const response = await dealService.getDeals({
         ...filters,
         page: pageParam,
       });
+      
       return {
         deals: response.results,
         currentPage: pageParam,
@@ -39,135 +61,230 @@ export const useInfiniteDeals = (filters?: DealFilters) => {
       }
       return undefined;
     },
+    staleTime: 60 * 1000, // 1 minute
   });
 };
 
-/** Fetch single deal by ID */
-export const useDeal = (id?: string) => {
+/**
+ * Hook for fetching a single deal by ID
+ */
+export const useDeal = (id?: string | number) => {
   return useQuery({
-    queryKey: ['deal', id],
-    queryFn: () => dealsApi.getDeal(id!),
+    queryKey: id ? dealKeys.detail(id) : dealKeys.details(),
+    queryFn: () => dealService.getDeal(id!),
     enabled: !!id,
+    staleTime: 3 * 60 * 1000, // 3 minutes
   });
 };
 
-/** Fetch featured deals */
+/**
+ * Hook for fetching featured deals for homepage
+ */
 export const useFeaturedDeals = (limit: number = 6) => {
   return useQuery({
-    queryKey: ['deals', 'featured', limit],
-    queryFn: () => dealsApi.getFeaturedDeals(),
-    staleTime: 1000 * 60 * 30,
+    queryKey: [...dealKeys.featured(), limit],
+    queryFn: () => dealService.getFeaturedDeals(limit),
+    staleTime: 5 * 60 * 1000, // 5 minutes cache
   });
 };
 
-/** Fetch deals ending soon */
+/**
+ * Hook for fetching deals ending soon
+ */
 export const useEndingSoonDeals = (days: number = 3, limit: number = 6) => {
   return useQuery({
-    queryKey: ['deals', 'ending-soon', days, limit],
-    queryFn: () => dealsApi.getEndingSoonDeals(),
-    staleTime: 1000 * 60 * 60,
+    queryKey: [...dealKeys.ending(), days, limit],
+    queryFn: () => dealService.getEndingSoonDeals(days, limit),
+    staleTime: 3 * 60 * 1000, // 3 minutes
   });
 };
 
-/** Fetch popular deals */
-export const usePopularDeals = (limit: number = 6) => {
-  return useQuery({
-    queryKey: ['deals', 'popular', limit],
-    queryFn: () => dealsApi.getPopularDeals(limit),
-    staleTime: 1000 * 60 * 60 * 24,
-  });
-};
-
-/** Fetch deals near user's location */
+/**
+ * Hook for fetching nearby deals based on user location
+ * Updated to use a literal queryKey array as provided.
+ */
 export const useNearbyDeals = (
-  latitude?: number, 
-  longitude?: number, 
+  latitude?: number | null,
+  longitude?: number | null,
   radius: number = 10
 ) => {
   return useQuery({
     queryKey: ['deals', 'nearby', latitude, longitude, radius],
-    queryFn: () => dealsApi.getNearbyDeals(latitude!, longitude!, radius),
+    queryFn: () => dealService.getNearbyDeals(latitude!, longitude!, radius),
     enabled: !!latitude && !!longitude,
-    staleTime: 1000 * 60 * 10,
+    staleTime: 2 * 60 * 1000, // 2 minutes - shorter cache for location-specific data
+    retry: 1,
   });
 };
 
-/** Search deals */
+/**
+ * Hook for searching deals
+ * Includes debounce handling in the component that uses it
+ */
 export const useSearchDeals = (query: string) => {
   return useQuery({
-    queryKey: ['deals', 'search', query],
-    queryFn: () => dealsApi.searchDeals(query),
-    enabled: query.length > 2,
-    staleTime: 1000 * 60 * 5,
+    queryKey: dealKeys.search(query),
+    queryFn: () => dealService.searchDeals(query),
+    enabled: query.length > 2, // Only search when query is substantial
+    staleTime: 1 * 60 * 1000, // 1 minute cache for search results
   });
 };
 
-/** Toggle deal favorite status */
+/**
+ * Hook for toggling deal favorite status
+ * Uses optimistic updates for better UX
+ */
 export const useToggleDealFavorite = () => {
   const queryClient = useQueryClient();
-  
+ 
   return useMutation({
-    mutationFn: ({ dealId, isFavorite }: { dealId: string; isFavorite: boolean }) => 
-      dealsApi.toggleFavorite(dealId, isFavorite),
+    mutationFn: ({ dealId, isFavorite }: { dealId: string | number; isFavorite: boolean }) =>
+      dealService.toggleFavorite(dealId, isFavorite),
+    
+    // Optimistic update for better UX
     onMutate: async ({ dealId, isFavorite }) => {
-      await queryClient.cancelQueries({ queryKey: ['deal', dealId] });
-      const previousDeal = queryClient.getQueryData<Deal>(['deal', dealId]);
+      // Cancel any outgoing refetches 
+      await queryClient.cancelQueries({ queryKey: dealKeys.detail(dealId) });
       
+      // Snapshot the previous value
+      const previousDeal = queryClient.getQueryData<Deal>(dealKeys.detail(dealId));
+     
+      // Optimistically update to the new value
       if (previousDeal) {
-        queryClient.setQueryData(['deal', dealId], {
+        queryClient.setQueryData(dealKeys.detail(dealId), {
           ...previousDeal,
           isFavorite
         });
       }
-      
+     
       return { previousDeal };
     },
+    
+    // Show success message
     onSuccess: (_, { isFavorite }) => {
       toast.success(
-        isFavorite 
-          ? 'Deal added to favorites' 
-          : 'Deal removed from favorites'
+        isFavorite
+          ? '✓ Deal added to favorites'
+          : '✓ Deal removed from favorites'
       );
     },
+    
+    // If there's an error, revert to the previous state
     onError: (error, { dealId }, context) => {
       if (context?.previousDeal) {
-        queryClient.setQueryData(['deal', dealId], context.previousDeal);
+        queryClient.setQueryData(dealKeys.detail(dealId), context.previousDeal);
       }
       toast.error('Failed to update favorites. Please try again.');
     },
+    
+    // Always refetch to ensure consistency
     onSettled: (_, __, { dealId }) => {
-      queryClient.invalidateQueries({ queryKey: ['deal', dealId] });
-      queryClient.invalidateQueries({ queryKey: ['userFavorites'] });
+      queryClient.invalidateQueries({ queryKey: dealKeys.detail(dealId) });
+      queryClient.invalidateQueries({ queryKey: dealKeys.favorites() });
     },
   });
 };
 
-/** Fetch deals by shop */
-export const useDealsByShop = (shopId?: string, limit: number = 12) => {
+/**
+ * Hook for fetching deals by shop
+ */
+export const useDealsByShop = (shopId?: string | number, limit: number = 12) => {
   return useQuery({
-    queryKey: ['deals', 'shop', shopId, limit],
-    queryFn: () => dealsApi.getShopDeals(shopId!),
+    queryKey: [...dealKeys.lists(), 'shop', shopId, limit],
+    queryFn: () => dealService.getShopDeals(shopId!, limit),
     enabled: !!shopId,
-    staleTime: 1000 * 60 * 15,
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 };
 
-/** Fetch deals by category */
-export const useDealsByCategory = (categoryId?: string, limit: number = 12) => {
+/**
+ * Hook for fetching deals by category
+ */
+export const useDealsByCategory = (categoryId?: string | number, limit: number = 12) => {
   return useQuery({
-    queryKey: ['deals', 'category', categoryId, limit],
-    queryFn: () => dealsApi.getCategoryDeals(categoryId!),
+    queryKey: [...dealKeys.lists(), 'category', categoryId, limit],
+    queryFn: () => dealService.getCategoryDeals(categoryId!, limit),
     enabled: !!categoryId,
-    staleTime: 1000 * 60 * 60,
+    staleTime: 10 * 60 * 1000, // 10 minutes - category data changes less frequently
   });
 };
 
-/** Fetch related deals */
-export const useRelatedDeals = (dealId?: string, limit: number = 3) => {
+/**
+ * Hook for fetching related deals
+ */
+export const useRelatedDeals = (dealId?: string | number, limit: number = 3) => {
   return useQuery({
-    queryKey: ['deals', 'related', dealId, limit],
-    queryFn: () => dealsApi.getRelatedDeals(dealId!, limit),
+    queryKey: [...dealKeys.details(), 'related', dealId, limit],
+    queryFn: () => dealService.getRelatedDeals(dealId!, limit),
     enabled: !!dealId,
-    staleTime: 1000 * 60 * 30,
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
+};
+
+/**
+ * Hook for tracking a deal view
+ */
+export const useTrackDealView = () => {
+  return useMutation({
+    mutationFn: (dealId: string | number) => dealService.trackDealView(dealId),
+    // No need for complex error handling here - fire and forget
+    onError: () => {
+      // Silent failure is acceptable for analytics
+    }
+  });
+};
+
+/**
+ * Hook for tracking a deal click
+ */
+export const useTrackDealClick = () => {
+  return useMutation({
+    mutationFn: (dealId: string | number) => dealService.trackDealClick(dealId),
+    // No need for complex error handling here - fire and forget
+    onError: () => {
+      // Silent failure is acceptable for analytics
+    }
+  });
+};
+
+/**
+ * Combined hook for a deal detail page that needs multiple related data pieces
+ */
+export const useDealDetailPage = (dealId?: string | number) => {
+  const dealQuery = useDeal(dealId);
+  const relatedDealsQuery = useRelatedDeals(dealId);
+  const trackView = useTrackDealView();
+  
+  // Track view when the deal loads successfully
+  useEffect(() => {
+    if (dealId && dealQuery.isSuccess) {
+      trackView.mutate(dealId);
+    }
+  }, [dealId, dealQuery.isSuccess, trackView]);
+
+  return {
+    deal: dealQuery.data,
+    isLoading: dealQuery.isLoading,
+    error: dealQuery.error,
+    relatedDeals: relatedDealsQuery.data || [],
+    isLoadingRelated: relatedDealsQuery.isLoading
+  };
+};
+
+// Export default object with all hooks
+export default {
+  useDeals,
+  useInfiniteDeals,
+  useDeal,
+  useFeaturedDeals,
+  useEndingSoonDeals,
+  useNearbyDeals,
+  useSearchDeals,
+  useToggleDealFavorite,
+  useDealsByShop,
+  useDealsByCategory,
+  useRelatedDeals,
+  useTrackDealView,
+  useTrackDealClick,
+  useDealDetailPage
 };

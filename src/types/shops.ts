@@ -38,3 +38,42 @@ export interface ShopFilters {
     page_size?: number;
     ordering?: string;
 }
+
+
+/*
+ // For wagtail intergration into shops & products! 
+ import axios from 'axios';
+ 
+ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+ 
+ export interface Shop {
+    id: number;
+    name: string;
+    description: string;
+    short_description: string;
+    logo_url: string;
+    is_verified: boolean;
+    is_featured: boolean;
+    rating: number;
+    deal_count: number;
+    location_details?: {
+      address: string;
+      city: string;
+      state: string;
+      country: string;
+      postal_code: string;
+      latitude: number;
+      longitude: number;
+    };
+ }
+ 
+ export interface Product {
+    id: number;
+    name: string;
+    description?: string;
+    price: number;
+    discount_percentage: number;
+    discounted_price: number;
+    shop: number;
+ }
+*/

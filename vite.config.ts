@@ -72,15 +72,16 @@ export default defineConfig({
         ws: true,
         cookieDomainRewrite: 'localhost',
         cookiePathRewrite: '/',
-        configure: (proxy, _options) => {
-          proxy.on('error', (err, _req, _res) => {
+        configure: (proxy) => {
+          proxy.on('error', (err) => {
             console.log('proxy error', err);
           });
-          proxy.on('proxyReq', (proxyReq, _req, _res) => {
+          proxy.on('proxyReq', (proxyReq) => {
             console.log('Sending Request to the Target:', proxyReq.method, proxyReq.path);
           });
-          proxy.on('proxyRes', (proxyRes, _req, _res) => {
-            console.log('Received Response from the Target:', proxyRes.statusCode, (proxyRes as any).req?.url);
+          proxy.on('proxyRes', (proxyRes) => {
+            // Cast only if needed; otherwise, access properties directly
+            console.log('Received Response from the Target:', proxyRes.statusCode, proxyRes.req?.url);
           });
         },
       },

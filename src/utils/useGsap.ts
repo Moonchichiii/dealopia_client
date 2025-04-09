@@ -43,12 +43,13 @@ type DependencyList = ReadonlyArray<unknown>;
 export const useGSAP = (
     callback: (ctx: gsap.Context) => void,
     dependencies: DependencyList = []
-): void => {
+  ): void => {
     useEffect(() => {
-        const ctx = gsap.context(callback);
-        return () => ctx.revert();
-    }, dependencies);
-};
+      const ctx = gsap.context(callback);
+      return () => ctx.revert();
+    }, [callback, ...dependencies]);
+  };
+  
 
 // Export GSAP and plugins
 export {

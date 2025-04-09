@@ -1,13 +1,13 @@
 import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
-import { categoriesApi, dealsApi } from '@/api/services';
+import { categoryService, dealService } from '@/api/services';
 
 /**
  * Fetch all categories
  */
-export const useCategories = (params?: { parent?: number; is_active?: boolean }) => {
+export const useCategories = (params?: { parent?: number; is_active?: boolean; limit?: number }) => {
   return useQuery({
     queryKey: ['categories', params],
-    queryFn: () => categoriesApi.getCategories(params),
+    queryFn: () => categoryService.getCategories(params),
     staleTime: 1000 * 60 * 60,
   });
 };
@@ -18,7 +18,7 @@ export const useCategories = (params?: { parent?: number; is_active?: boolean })
 export const useCategory = (id?: number | string) => {
   return useQuery({
     queryKey: ['category', id],
-    queryFn: () => categoriesApi.getCategory(id!),
+    queryFn: () => categoryService.getCategory(id!),
     enabled: !!id,
     staleTime: 1000 * 60 * 30,
   });
@@ -40,7 +40,7 @@ export const useSearchDeals = (query: string, categoryId?: number) => {
         filters.categories = categoryId;
       }
       
-      const response = await dealsApi.getDeals(filters);
+      const response = await dealService.getDeals(filters);
       return {
         deals: response.results,
         currentPage: pageParam,

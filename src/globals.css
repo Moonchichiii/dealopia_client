@@ -14,29 +14,29 @@
     --color-accent-dark: #0891b2;
     --color-accent-darker: #0e7490;
   }
-  
+
   html {
     scroll-behavior: smooth;
   }
-  
+
   body {
     @apply bg-black text-gray-100 antialiased;
     font-family: 'Inter', system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
-  
+
   img {
     @apply max-w-full h-auto;
     aspect-ratio: attr(width) / attr(height);
   }
-  
+
   .gradient-text {
     @apply bg-gradient-to-r bg-clip-text text-transparent;
     display: inline-block !important;
     width: 100%;
   }
-  
+
   [style*="aspect-ratio"] > * {
     width: 100%;
     height: 100%;
@@ -45,14 +45,14 @@
     left: 0;
     object-fit: cover;
   }
-  
+
   .footer-placeholder {
     height: 350px;
     border-top: 1px solid rgba(38, 38, 38, 0.5);
     background-color: rgba(10, 10, 10, 0.5);
     backdrop-filter: blur(10px);
   }
-  
+
   @font-face {
     font-family: 'Inter';
     font-style: normal;
@@ -60,11 +60,11 @@
     font-display: swap;
     src: local('Inter'), url('https://fonts.gstatic.com/s/inter/v12/UcC73FwrK3iLTeHuS_fvQtMwCp50KnMa1ZL7.woff2') format('woff2');
   }
-  
+
   .font-inter {
     font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
   }
-  
+
   .optimized-lcp {
     font-display: swap;
     will-change: opacity;
@@ -77,38 +77,38 @@
   .btn {
     @apply inline-flex items-center justify-center rounded-lg font-medium transition-colors;
   }
-  
+
   .btn-primary {
     @apply bg-purple-500 hover:bg-purple-600 active:bg-purple-700 text-white;
   }
-  
+
   .btn-secondary {
     @apply bg-gray-800 hover:bg-gray-700 active:bg-gray-600 text-white;
   }
-  
+
   .btn-outline {
     @apply border border-gray-700 hover:bg-gray-800/50 text-gray-300;
   }
-  
+
   .card {
     @apply bg-gray-900/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-800/50;
   }
-  
+
   .form-input {
     @apply w-full bg-gray-800/50 border border-gray-700 rounded-lg px-4 py-2 text-white 
            placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50;
   }
-  
+
   .form-label {
     @apply block text-sm font-medium text-gray-300 mb-1;
   }
-  
+
   .gradient-text {
     @apply bg-gradient-to-r from-purple-400 via-white to-cyan-400 bg-clip-text text-transparent;
     display: inline-block;
     width: 100%;
   }
-  
+
   .video-background {
     position: absolute;
     top: 0;
@@ -117,7 +117,7 @@
     height: 100%;
     overflow: hidden;
   }
-  
+
   .video-background video {
     object-fit: cover;
     width: 100%;
@@ -129,7 +129,7 @@
     min-width: 100%;
     min-height: 100%;
   }
-  
+
   .card-media {
     position: relative;
     aspect-ratio: 16/9;
@@ -137,7 +137,7 @@
     background-color: #1a1a1a;
     overflow: hidden;
   }
-  
+
   .card-media > img {
     position: absolute;
     top: 0;
@@ -146,11 +146,11 @@
     height: 100%;
     object-fit: cover;
   }
-  
+
   .card-title {
     min-height: 3.5rem;
   }
-  
+
   .card-description {
     min-height: 2.5rem;
   }
@@ -162,7 +162,7 @@
     will-change: transform;
     backface-visibility: hidden;
   }
-  
+
   .aspect-16-9-container {
     position: relative;
     width: 100%;
@@ -171,7 +171,7 @@
     background-color: #1a1a1a;
     overflow: hidden;
   }
-  
+
   .aspect-16-9-content {
     position: absolute;
     top: 0;
@@ -180,20 +180,20 @@
     height: 100%;
     object-fit: cover;
   }
-  
+
   .min-h-title {
     min-height: 1.75rem;
   }
-  
+
   .min-h-description {
     min-height: 2.5rem;
   }
-  
+
   .gradient-text-container {
     display: inline-block;
     width: 100%;
   }
-  
+
   .prevent-cls {
     transform: translateZ(0);
     will-change: transform;
@@ -290,12 +290,12 @@
     padding-top: 5rem;
     padding-bottom: 2rem;
   }
-  
+
   .hero-content {
     padding-top: 3rem;
     padding-bottom: 3rem;
   }
-  
+
   .hero-video-container {
     position: absolute;
     top: 0;
@@ -333,3 +333,23 @@
     padding-bottom: 3rem;
   }
 }
+
+.footer-placeholder,
+footer {
+  position: relative;
+  z-index: 10;
+}
+
+.min-h-screen.flex.flex-col.relative {
+  isolation: isolate;
+}
+
+main.flex-grow.w-full {
+  position: relative;
+  z-index: 10;
+}
+
+header.fixed.top-0.left-0.right-0 {
+  z-index: 150;
+}
+

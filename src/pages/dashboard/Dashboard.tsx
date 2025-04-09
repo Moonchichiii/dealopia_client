@@ -1,4 +1,3 @@
-// src/pages/dashboard/Dashboard.tsx
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Store, BarChart as ChartBar, Package, Users, Settings, CreditCard } from 'lucide-react';
@@ -9,14 +8,12 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const [userRole, setUserRole] = useState<'customer' | 'shopkeeper'>('customer');
 
-  // Set user role when data is loaded
   useEffect(() => {
     if (user?.notification_preferences?.role === 'shopkeeper') {
       setUserRole('shopkeeper');
     }
   }, [user]);
 
-  // Redirect if not authenticated
   useEffect(() => {
     if (!isLoading && !user) {
       navigate('/signin');
@@ -40,7 +37,6 @@ const Dashboard = () => {
 
   const menuItems = userRole === 'shopkeeper' ? shopkeeperMenuItems : customerMenuItems;
 
-  // Show loading state
   if (isLoading) {
     return (
       <div className="min-h-screen pt-16 flex items-center justify-center">
@@ -54,7 +50,6 @@ const Dashboard = () => {
     );
   }
 
-  // Guard clause: if no user data is available, don't render
   if (!user) {
     return null;
   }
@@ -63,7 +58,6 @@ const Dashboard = () => {
     <div className="min-h-screen pt-16">
       <div className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-12 gap-6">
-          {/* Sidebar */}
           <div className="col-span-12 md:col-span-3">
             <div className="bg-neutral-900/50 backdrop-blur-sm rounded-2xl p-6 border border-neutral-800/50">
               <div className="flex items-center space-x-3 mb-6">
@@ -93,7 +87,6 @@ const Dashboard = () => {
             </div>
           </div>
 
-          {/* Main Content */}
           <div className="col-span-12 md:col-span-9">
             <div className="bg-neutral-900/50 backdrop-blur-sm rounded-2xl p-6 border border-neutral-800/50">
               <h2 className="text-2xl font-semibold text-white mb-6">
@@ -104,26 +97,26 @@ const Dashboard = () => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className="bg-neutral-800/50 rounded-xl p-4">
                     <h3 className="text-neutral-400 mb-2">Total Sales</h3>
-                    <p className="text-2xl font-semibold text-white">€2,459.00</p>
+                    <p className="text-2xl font-semibold text-white">-</p>
                   </div>
                   <div className="bg-neutral-800/50 rounded-xl p-4">
                     <h3 className="text-neutral-400 mb-2">Active Deals</h3>
-                    <p className="text-2xl font-semibold text-white">12</p>
+                    <p className="text-2xl font-semibold text-white">-</p>
                   </div>
                   <div className="bg-neutral-800/50 rounded-xl p-4">
                     <h3 className="text-neutral-400 mb-2">Total Customers</h3>
-                    <p className="text-2xl font-semibold text-white">89</p>
+                    <p className="text-2xl font-semibold text-white">-</p>
                   </div>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="bg-neutral-800/50 rounded-xl p-4">
                     <h3 className="text-neutral-400 mb-2">Active Orders</h3>
-                    <p className="text-2xl font-semibold text-white">3</p>
+                    <p className="text-2xl font-semibold text-white">-</p>
                   </div>
                   <div className="bg-neutral-800/50 rounded-xl p-4">
                     <h3 className="text-neutral-400 mb-2">Saved Deals</h3>
-                    <p className="text-2xl font-semibold text-white">8</p>
+                    <p className="text-2xl font-semibold text-white">-</p>
                   </div>
                 </div>
               )}

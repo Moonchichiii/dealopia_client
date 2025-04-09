@@ -1,29 +1,44 @@
 import { FC, useState, useEffect } from 'react';
 import CookieConsentBanner from 'react-cookie-consent';
 import { useTranslation } from 'react-i18next';
-import { AnimatePresence } from 'framer-motion';
-import { X } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { X, Info } from 'lucide-react';
 
 const CookieConsent: FC = () => {
   const { t } = useTranslation();
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [showMoreInfo, setShowMoreInfo] = useState(false);
+  const [declined, setDeclined] = useState(false);
 
-  // Update isMobile state when window resizes
   useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-    
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  const handleDecline = () => {
+    console.log('Cookies declined');
+    localStorage.setItem('dealopia-essential-only', 'true');
+    setDeclined(true);
+  };
+ 
+  if (declined) {
+    return (
+      <div className="p-3 text-center bg-neutral-900">
+        <p className="text-gray-200 mb-2">You've chosen to use only essential cookies.</p>
+        <p className="text-xs text-gray-400">
+          Some features like personalized deals and location-based recommendations may be limited.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <AnimatePresence>
       <CookieConsentBanner
         location={isMobile ? "top" : "bottom"}
         buttonText={t('cookies.accept')}
-        declineButtonText={t('cookies.decline')}
+        declineButtonText={t('cookies.essentialOnly', 'Essential Only')}
         cookieName="dealopia-cookie-consent"
         overlay={false}
         enableDeclineButton
@@ -59,6 +74,10 @@ const CookieConsent: FC = () => {
           transition: "background-color 0.2s",
           flex: "1 1 auto",
           minWidth: "120px",
+          textAlign: "center",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center"
         }}
         declineButtonStyle={{
           background: "rgba(255, 255, 255, 0.05)",
@@ -72,6 +91,10 @@ const CookieConsent: FC = () => {
           transition: "background-color 0.2s",
           flex: "1 1 auto",
           minWidth: "120px",
+          textAlign: "center",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center"
         }}
         contentStyle={{
           margin: "0 0 1.25rem",
@@ -84,15 +107,14 @@ const CookieConsent: FC = () => {
         expires={365}
         onAccept={() => {
           console.log('Cookies accepted');
+          localStorage.setItem('dealopia-essential-only', 'false');
         }}
-        onDecline={() => {
-          console.log('Cookies declined');
-        }}
+        onDecline={handleDecline}
       >
         <div className="relative pr-5">
-          <button 
-            onClick={() => {
-              document.querySelector('.CookieConsent')?.remove();
+          <button
+            onClick={() => {          
+              handleDecline();
             }}
             className="absolute -top-2 -right-2 text-gray-400 hover:text-white bg-black/30 hover:bg-black/50 rounded-full p-1 transition-colors"
             aria-label="Close cookie notice"
@@ -103,10 +125,36 @@ const CookieConsent: FC = () => {
             {t('cookies.title', 'Cookie Settings')}
           </h4>
           <p className="mb-2 text-gray-200">
-            {t('cookies.message')}
+            {t('cookies.message', 'We use cookies to enhance your experience and show you personalized sustainable deals.')}
           </p>
+          <div className="mb-3">
+            <button
+              onClick={() => setShowMoreInfo(!showMoreInfo)}
+              className="text-xs text-primary-400 flex items-center hover:underline"
+            >
+              <Info size={12} className="mr-1" />
+              {showMoreInfo ? "Hide details" : "What if I choose 'Essential Only'?"}
+            </button>
+            {showMoreInfo && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="mt-2 p-3 bg-black/20 border border-neutral-800 rounded-lg text-xs"
+              >
+                <p className="text-gray-300 mb-2">If you choose "Essential Only":</p>
+                <ul className="list-disc list-inside text-gray-400 space-y-1">
+                  <li>We'll only use cookies necessary for basic functionality</li>
+                  <li>Location-based deal discovery will require manual input</li>
+                  <li>Deal recommendations won't be personalized</li>
+                  <li>Your search history won't be saved between sessions</li>
+                  <li>You can change your preference at any time in Settings</li>
+                </ul>
+              </motion.div>
+            )}
+          </div>
           <p className="text-xs text-gray-400 leading-tight">
-            Accepting cookies helps us personalize sustainable deals for you and improve your eco-friendly shopping experience.
+            We prioritize your privacy. Dealopia uses first-party cookies only to improve your eco-friendly shopping experience.
           </p>
         </div>
       </CookieConsentBanner>

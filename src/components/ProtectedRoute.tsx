@@ -1,4 +1,3 @@
-
 import { Navigate, useLocation } from 'react-router-dom';
 import { useUser, checkIsAuthenticated } from '@/hooks/useAuth';
 import { Loader } from 'lucide-react';
@@ -11,6 +10,7 @@ interface ProtectedRouteProps {
 
 /**
  * Protected route with role-based access control
+ * Integrates with Django backend roles and permissions
  */
 const ProtectedRoute = ({
   children,
@@ -22,6 +22,22 @@ const ProtectedRoute = ({
   
   // Fast initial check from local storage before query completes
   const isAuthenticated = user !== null || (!isLoading && !error && checkIsAuthenticated());
+
+  // Check user roles and permissions
+  const checkUserPermissions = () => {
+    if (!user || !requiredRoles.length) return true;
+
+    // Check if user has any of the required roles
+    const userRoles = [
+      // Default role from Django backend
+      user.notification_preferences?.role,
+      // Additional roles if user is staff or superuser
+      user.is_staff && 'staff',
+      user.is_superuser && 'admin'
+    ].filter(Boolean) as string[];
+
+    return requiredRoles.some(role => userRoles.includes(role));
+  };
 
   if (isLoading) {
     return (
@@ -37,6 +53,7 @@ const ProtectedRoute = ({
     );
   }
 
+  // Handle authentication requirement
   if (!isAuthenticated && requireAuth) {
     return (
       <Navigate
@@ -50,22 +67,27 @@ const ProtectedRoute = ({
     );
   }
 
+  // Redirect authenticated users away from auth pages
   if (isAuthenticated && !requireAuth) {
     return <Navigate to="/dashboard" replace />;
   }
 
-  if (isAuthenticated && requireAuth && requiredRoles.length > 0 && user) {
-    const hasRequiredRole = user?.notification_preferences?.role
-      ? requiredRoles.includes(user.notification_preferences.role)
-      : false;
+  // Check role-based access
+  if (isAuthenticated && requireAuth && requiredRoles.length > 0) {
+    const hasPermission = checkUserPermissions();
 
-    if (!hasRequiredRole) {
+    if (!hasPermission) {
       return (
         <div className="min-h-screen flex items-center justify-center bg-neutral-950 p-4">
           <div className="bg-neutral-900/50 backdrop-blur-sm rounded-xl p-8 max-w-md w-full">
             <h2 className="text-xl font-display font-bold text-white mb-3">Access Denied</h2>
             <p className="text-neutral-400 mb-6">
               You don't have the required permissions to access this page.
+              {user?.notification_preferences?.role && (
+                <span className="block mt-2">
+                  Current role: {user.notification_preferences.role}
+                </span>
+              )}
             </p>
             <div className="flex justify-center">
               <button

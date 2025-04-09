@@ -1,8 +1,7 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClient } from '@tanstack/react-query';
 import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister';
 import { persistQueryClient } from '@tanstack/react-query-persist-client';
 
-// Create query client with default options
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -14,26 +13,44 @@ const queryClient = new QueryClient({
   },
 });
 
-// Session storage persister
 const persister = createSyncStoragePersister({
   storage: window.sessionStorage,
+  key: 'dealopia-query-cache',
+  serialize: (data): string => JSON.stringify(data),
+  deserialize: (data): unknown => JSON.parse(data),
 });
 
 persistQueryClient({
   queryClient,
   persister,
   maxAge: 1000 * 60 * 60 * 24,
-  // Add this dehydrateOptions configuration
   dehydrateOptions: {
     shouldDehydrateQuery: (query) => {
-      // Don't persist auth queries to storage
       const queryKey = query.queryKey;
-      if (Array.isArray(queryKey) && queryKey[0] === 'auth') {
+      
+      if (Array.isArray(queryKey)) {
+        if (
+          queryKey[0] === 'auth' || 
+          (queryKey.length > 1 && queryKey[0] === 'user') ||
+          queryKey.join('/').includes('auth') ||
+          queryKey.join('/').includes('login') ||
+          queryKey.join('/').includes('register')
+        ) {
+          return false;
+        }
+      }
+      
+      if (query.state.status !== 'success') {
         return false;
       }
+      
+      if (query.state.error) {
+        return false;
+      }
+      
       return true;
     }
   }
 });
 
-export { queryClient, QueryClientProvider };
+export { queryClient };

@@ -5,7 +5,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { z } from 'zod';
 
-import { authService } from '@/api/AuthServices';
+import { authService } from '@/api/services/authService';
 
 // Password utility functions
 const calculatePasswordStrength = (password: string): number => {

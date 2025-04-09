@@ -29,44 +29,9 @@ export interface RegisterData {
   last_name: string;
   phone_number?: string;
   preferred_language?: string;
-  provider?: 'google' | 'facebook' | 'github'; // For social registrations
-}
-
-export interface AuthState {
-  isAuthenticated: boolean;
-  user: UserProfile | null;
-  error: string | null;
-  isLoading: boolean;
 }
 
 export interface AuthTokens {
   access: string;
   refresh: string;
-}
-
-export interface TwoFactorAuthResponse {
-  requires_2fa: boolean;
-  user_id: string;
-  message: string;
-}
-
-export interface TwoFactorSetupResponse {
-  qr_code: string;
-  secret: string;
-  instructions: string;
-}
-
-export interface PasswordResetRequest {
-  email: string;
-}
-
-export interface PasswordResetConfirm {
-  token: string;
-  new_password1: string;
-  new_password2: string;
-}
-
-export interface EmailChangeRequest {
-  new_email: string;
-  password: string;
 }

@@ -4,7 +4,6 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { ToastContainer } from 'react-toastify';
 
 import { queryClient } from '@/lib/queryClient';
-import { ThemeProvider } from '@/context/ThemeContext';
 import Layout from '@/components/layout/Layout';
 import Loader from '@/components/Loader';
 import ProtectedRoute from '@/components/ProtectedRoute';
@@ -14,8 +13,8 @@ import '@/globals.css';
 
 // Lazy loaded pages
 const Home = lazy(() => import('@/pages/Home'));
-const SignIn = lazy(() => import('@/pages/SignIn'));
-const SignUp = lazy(() => import('@/pages/SignUp'));
+const SignIn = lazy(() => import('@/components/auth/SignIn'));
+const SignUp = lazy(() => import('@/components/auth/SignUp'));
 const Dashboard = lazy(() => import('@/pages/dashboard/Dashboard'));
 const About = lazy(() => import('@/pages/About'));
 const NotFound = lazy(() => import('@/pages/NotFound'));
@@ -35,7 +34,6 @@ function App(): JSX.Element {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
         <Router>
           <Suspense fallback={<Loader progress={50} />}>
             <Routes>
@@ -83,8 +81,7 @@ function App(): JSX.Element {
           pauseOnHover
           theme="dark"
         />
-      </ThemeProvider>
-    </QueryClientProvider>
+      </QueryClientProvider>
   );
 }
 

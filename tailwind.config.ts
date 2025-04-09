@@ -5,7 +5,7 @@ const config: Config = {
     './index.html',
     './src/**/*.{js,ts,jsx,tsx}',
   ],
-  darkMode: 'class',
+  darkMode: 'class',  
   theme: {
     extend: {
       colors: {
@@ -39,6 +39,15 @@ const config: Config = {
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
         display: ['Plus Jakarta Sans', 'Inter', 'sans-serif'],
+      },
+      zIndex: {
+        '100': '100',
+        '150': '150',
+        '200': '200',
+        '500': '500',
+        '1000': '1000',
+        '9000': '9000',
+        '9999': '9999',
       },
       animation: {
         'gradient-x': 'gradient-x 15s ease infinite',

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
-import { authService } from '@/api/AuthServices';
+import { authService } from '@/api/services/authService';
 
 const VerifyEmail = () => {
     const [searchParams] = useSearchParams();

@@ -1,3 +1,6 @@
+import { Shop } from './shops';
+import { Category } from './categories';
+
 export interface Deal {
   id: number;
   title: string;

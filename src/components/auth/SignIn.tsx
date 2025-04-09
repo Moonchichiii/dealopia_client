@@ -1,10 +1,9 @@
-// src/pages/SignIn.tsx
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
-import { LogIn, AlertTriangle, Loader, Facebook, Github } from 'lucide-react';
+import { LogIn, AlertTriangle, Facebook, Github, Loader } from 'lucide-react';
 import gsap from 'gsap';
 
 // Form validation schema
@@ -13,27 +12,24 @@ const signInSchema = z.object({
   password: z.string().min(8, 'Password must be at least 8 characters'),
   remember: z.boolean().optional(),
 });
+export type SignInFormData = z.infer<typeof signInSchema>;
 
-type SignInFormData = z.infer<typeof signInSchema>;
+interface SignInProps {
+  isModal?: boolean;
+  onToggleView?: () => void;
+  onSuccess?: () => void;
+}
 
-type Message = {
-  type: 'error' | 'success';
-  text: string;
-};
-
-const SignIn: React.FC<{ isModal?: boolean; onToggleView?: () => void }> = ({
-  isModal = false,
-  onToggleView
-}) => {
+const SignIn: React.FC<SignInProps> = ({ isModal = false, onToggleView, onSuccess }) => {
   const formRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const location = useLocation();
   const { login, isAuthenticated, isLoading: isLoginLoading } = useAuth();
   const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState<Message | null>(null);
- 
+  const [success, setSuccess] = useState(false);
+
   // Get the return path from location state or default to dashboard
-  const from = (location.state as any)?.from || '/dashboard';
+  const from = (location.state as { from?: string })?.from || '/dashboard';
 
   // Initialize form with react-hook-form
   const {
@@ -46,37 +42,79 @@ const SignIn: React.FC<{ isModal?: boolean; onToggleView?: () => void }> = ({
   const onSubmit = async (data: SignInFormData) => {
     try {
       setError(null);
-      await login({ email: data.email, password: data.password });
-      // The auth context will handle loading state and errors
-    } catch (error: any) {
-      setError(error.message || 'Failed to sign in. Please try again.');
+      const response = await login({ email: data.email, password: data.password });
+      if (isModal && onSuccess) {
+        setSuccess(true);
+        setTimeout(() => {
+          onSuccess();
+        }, 1500);
+      }
+      return response;
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('Failed to sign in. Please try again.');
+      }
     }
   };
 
   // Social login handlers
-  const handleGoogleLogin = () => {
-    // Google login logic
+  const handleGoogleLogin = async () => {
+    try {
+      await login({ provider: 'google' });
+      if (isModal && onSuccess) {
+        onSuccess();
+      }
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('Failed to sign in with Google.');
+      }
+    }
   };
 
-  const handleFacebookLogin = () => {
-    // Facebook login logic
+  const handleFacebookLogin = async () => {
+    try {
+      await login({ provider: 'facebook' });
+      if (isModal && onSuccess) {
+        onSuccess();
+      }
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('Failed to sign in with Facebook.');
+      }
+    }
   };
 
-  const handleGithubLogin = () => {
-    // Github login logic
+  const handleGithubLogin = async () => {
+    try {
+      await login({ provider: 'github' });
+      if (isModal && onSuccess) {
+        onSuccess();
+      }
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('Failed to sign in with GitHub.');
+      }
+    }
   };
 
-  // Redirect if already authenticated
+  // Redirect if already authenticated (for full page version)
   useEffect(() => {
-    if (isAuthenticated) {
+    if (!isModal && isAuthenticated) {
       navigate(from, { replace: true });
     }
-  }, [isAuthenticated, navigate, from]);
+  }, [isAuthenticated, navigate, from, isModal]);
 
   // GSAP animation
   useEffect(() => {
     if (!formRef.current) return;
-   
     const ctx = gsap.context(() => {
       gsap.from('.form-element', {
         y: 20,
@@ -86,38 +124,45 @@ const SignIn: React.FC<{ isModal?: boolean; onToggleView?: () => void }> = ({
         ease: 'power3.out'
       });
     }, formRef);
-
     return () => ctx.revert();
   }, []);
 
-  // Render content function
+  // Success message component
+  const renderSuccessMessage = () => (
+    <div className="text-center p-4">
+      <div className="mb-8">
+        <div className="mx-auto w-16 h-16 bg-primary-500/20 rounded-full flex items-center justify-center">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+        <h2 className="mt-6 text-3xl font-display font-bold bg-gradient-to-r from-primary-200 via-white to-accent-200 bg-clip-text text-transparent">
+          Sign In Successful!
+        </h2>
+        <p className="mt-2 text-neutral-400">Welcome back to DealOpia.</p>
+      </div>
+    </div>
+  );
+
+  // Main content render function
   const renderContent = () => (
     <>
       <div className="text-center mb-8">
         <h2 className="text-3xl font-display font-bold bg-gradient-to-r from-primary-200 via-white to-accent-200 bg-clip-text text-transparent">
           Welcome Back
         </h2>
-        <p className="mt-2 text-neutral-400">
-          Sign in to access your account
-        </p>
+        <p className="mt-2 text-neutral-400">Sign in to access your account</p>
       </div>
 
       <div ref={formRef} className="bg-neutral-900/50 backdrop-blur-sm rounded-2xl p-8 border border-neutral-800/50">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          {message && (
-            <div className={`${message.type === 'error' ? 'bg-red-900/50 border-red-800' : 'bg-green-900/50 border-green-800'} border text-white px-4 py-3 rounded-lg form-element flex items-start gap-3`}>
-              {message.type === 'error' ? <AlertTriangle size={18} /> : null}
-              {message.text}
-            </div>
-          )}
-         
           {error && (
             <div className="bg-red-900/50 border border-red-800 text-white px-4 py-3 rounded-lg form-element flex items-start gap-3">
               <AlertTriangle size={18} />
               {error}
             </div>
           )}
-         
+
           <div className="form-element">
             <label htmlFor="email" className="block text-sm font-medium text-neutral-300 mb-1">
               Email Address
@@ -186,65 +231,81 @@ const SignIn: React.FC<{ isModal?: boolean; onToggleView?: () => void }> = ({
               </>
             )}
           </button>
-         
+        </form>
+
+        <div className="mt-6">
           <div className="relative form-element">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-neutral-700"></div>
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-neutral-900/50 text-neutral-400">Or continue with</span>
+              <span className="px-2 bg-neutral-900/50 text-neutral-400">Or sign in with</span>
             </div>
           </div>
-         
-          <div className="grid grid-cols-3 gap-3 form-element">
+
+          <div className="mt-4 grid grid-cols-3 gap-3 form-element">
             <button
               type="button"
               onClick={handleGoogleLogin}
-              className="flex justify-center items-center py-2 px-4 border border-neutral-700 rounded-lg bg-neutral-800/50 hover:bg-neutral-700/50 transition-colors"
+              className="px-4 py-2 bg-neutral-800/50 hover:bg-neutral-700/70 border border-neutral-700 rounded-lg flex items-center justify-center gap-2 text-neutral-300 transition-colors"
             >
-              <img src="/images/google.svg" alt="Google" className="h-5 w-5" />
+              
+              <span>Google</span>
             </button>
             <button
               type="button"
               onClick={handleFacebookLogin}
-              className="flex justify-center items-center py-2 px-4 border border-neutral-700 rounded-lg bg-neutral-800/50 hover:bg-neutral-700/50 transition-colors"
+              className="px-4 py-2 bg-neutral-800/50 hover:bg-neutral-700/70 border border-neutral-700 rounded-lg flex items-center justify-center gap-2 text-neutral-300 transition-colors"
             >
-              <Facebook size={18} className="text-blue-500" />
+              <Facebook size={20} className="text-[#1877F2]" />
+              <span>Facebook</span>
             </button>
             <button
               type="button"
               onClick={handleGithubLogin}
-              className="flex justify-center items-center py-2 px-4 border border-neutral-700 rounded-lg bg-neutral-800/50 hover:bg-neutral-700/50 transition-colors"
+              className="px-4 py-2 bg-neutral-800/50 hover:bg-neutral-700/70 border border-neutral-700 rounded-lg flex items-center justify-center gap-2 text-neutral-300 transition-colors"
             >
-              <Github size={18} className="text-white" />
+              <Github size={20} />
+              <span>GitHub</span>
             </button>
           </div>
-        </form>
-      </div>
+        </div>
 
-      <p className="mt-4 text-center text-sm text-neutral-400">
-        Don't have an account?{' '}
-        {isModal ? (
-          <button
-            onClick={onToggleView}
-            className="text-primary-400 hover:text-primary-300 font-medium"
-          >
-            Sign up now
-          </button>
-        ) : (
-          <Link to="/signup" className="text-primary-400 hover:text-primary-300 font-medium">
-            Sign up now
-          </Link>
-        )}
-      </p>
+        <div className="mt-6 text-center text-sm text-neutral-400 form-element">
+          Don't have an account?{' '}
+          {isModal && onToggleView ? (
+            <button
+              type="button"
+              onClick={onToggleView}
+              className="text-primary-400 hover:text-primary-300 font-medium"
+            >
+              Sign up now
+            </button>
+          ) : (
+            <Link to="/signup" className="text-primary-400 hover:text-primary-300 font-medium">
+              Sign up now
+            </Link>
+          )}
+        </div>
+      </div>
     </>
   );
 
-  return (
-    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center py-12 px-4">
-      <div className="max-w-md w-full">
-        {renderContent()}
+  if (success) {
+    return isModal ? (
+      <div className="w-full">{renderSuccessMessage()}</div>
+    ) : (
+      <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center py-12 px-4">
+        <div className="max-w-md w-full text-center">{renderSuccessMessage()}</div>
       </div>
+    );
+  }
+
+  return isModal ? (
+    <div className="w-full p-4">{renderContent()}</div>
+  ) : (
+    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center py-12 px-4">
+      <div className="max-w-md w-full">{renderContent()}</div>
     </div>
   );
 };

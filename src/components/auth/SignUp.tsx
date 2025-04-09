@@ -1,5 +1,4 @@
-// src/pages/SignUp.tsx
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -7,23 +6,21 @@ import { UserPlus, Github, Facebook } from 'lucide-react';
 import gsap from 'gsap';
 import { useRegister, useUser } from '@/hooks/useAuth';
 
-// Form validation schema
+// Form validation schema (used for type inference)
+
 const signUpSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
   first_name: z.string().min(2, 'First name is required'),
   last_name: z.string().min(2, 'Last name is required'),
   password: z.string().min(8, 'Password must be at least 8 characters'),
   password_confirm: z.string(),
-  phone_number: z.string().optional(),
-  terms: z.boolean().refine(val => val === true, {
-    message: 'You must agree to the terms and conditions',
-  }),
+  phone_number: z.string().optional(),  
 }).refine(data => data.password === data.password_confirm, {
   message: "Passwords don't match",
   path: ['password_confirm'],
 });
 
-type SignUpFormData = z.infer<typeof signUpSchema>;
+export type SignUpFormData = z.infer<typeof signUpSchema>;
 
 interface SignUpProps {
   isModal?: boolean;
@@ -41,53 +38,52 @@ const SignUp: React.FC<SignUpProps> = ({ isModal = false, onToggleView, onSucces
   
   const isAuthenticated = !!user;
   
-  // Initialize form with react-hook-form
   const { 
-    register, 
-    handleSubmit, 
+    register,
+    handleSubmit,
     formState: { errors, isSubmitting }
   } = useForm<SignUpFormData>();
 
-  // Update error state when register error changes
   useEffect(() => {
     if (registerError) {
       setSubmitError(registerError.toString());
     }
   }, [registerError]);
 
-  // Submit handler
   const onSubmit = async (data: SignUpFormData) => {
     try {
       setSubmitError(null);
-      
-      // Exclude terms from the data sent to API
+      // Exclude 'terms' from the data sent to API
       const { terms, ...registerData } = data;
-      
       const response = await registerUser(registerData);
       setSuccess(true);
-      
       if (isModal && onSuccess) {
         setTimeout(() => {
           onSuccess();
-        }, 3000); // Auto close after 3 seconds if in modal mode
+        }, 3000); // Auto close after 3 seconds in modal mode
       }
-      
       return response;
-      
-    } catch (error: any) {
-      setSubmitError(error.message || 'Failed to sign up. Please try again.');
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setSubmitError(err.message);
+      } else {
+        setSubmitError('Failed to sign up. Please try again.');
+      }
     }
   };
 
-  // Social login handlers
   const handleGoogleLogin = async () => {
     try {
       await registerUser({ provider: 'google' });
       if (isModal && onSuccess) {
         onSuccess();
       }
-    } catch (error: any) {
-      setSubmitError(error.message || 'Failed to sign up with Google.');
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setSubmitError(err.message);
+      } else {
+        setSubmitError('Failed to sign up with Google.');
+      }
     }
   };
 
@@ -97,8 +93,12 @@ const SignUp: React.FC<SignUpProps> = ({ isModal = false, onToggleView, onSucces
       if (isModal && onSuccess) {
         onSuccess();
       }
-    } catch (error: any) {
-      setSubmitError(error.message || 'Failed to sign up with Facebook.');
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setSubmitError(err.message);
+      } else {
+        setSubmitError('Failed to sign up with Facebook.');
+      }
     }
   };
 
@@ -108,22 +108,25 @@ const SignUp: React.FC<SignUpProps> = ({ isModal = false, onToggleView, onSucces
       if (isModal && onSuccess) {
         onSuccess();
       }
-    } catch (error: any) {
-      setSubmitError(error.message || 'Failed to sign up with GitHub.');
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setSubmitError(err.message);
+      } else {
+        setSubmitError('Failed to sign up with GitHub.');
+      }
     }
   };
 
-  // Redirect if already authenticated (only for full page version)
+  // Redirect if already authenticated (for full page usage)
   useEffect(() => {
     if (!isModal && isAuthenticated) {
       navigate('/dashboard');
     }
   }, [isAuthenticated, navigate, isModal]);
 
-  // GSAP animation
+  // GSAP animation for form elements
   useEffect(() => {
     if (!formRef.current) return;
-    
     const ctx = gsap.context(() => {
       gsap.from('.form-element', {
         y: 20,
@@ -133,11 +136,9 @@ const SignUp: React.FC<SignUpProps> = ({ isModal = false, onToggleView, onSucces
         ease: 'power3.out'
       });
     }, formRef);
-
     return () => ctx.revert();
   }, []);
 
-  // Success message component
   const renderSuccessMessage = () => (
     <div className="text-center p-4">
       <div className="mb-8">
@@ -153,7 +154,6 @@ const SignUp: React.FC<SignUpProps> = ({ isModal = false, onToggleView, onSucces
           We've sent a verification email to your inbox. Please check your email and follow the instructions to complete your registration.
         </p>
       </div>
-      
       {isModal && onToggleView ? (
         <button 
           onClick={onToggleView}
@@ -172,7 +172,6 @@ const SignUp: React.FC<SignUpProps> = ({ isModal = false, onToggleView, onSucces
     </div>
   );
 
-  // Form component
   const renderForm = () => (
     <>
       <div className="text-center mb-8">
@@ -327,7 +326,6 @@ const SignUp: React.FC<SignUpProps> = ({ isModal = false, onToggleView, onSucces
           </button>
         </form>
 
-        {/* Social login section */}
         <div className="mt-6">
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
@@ -391,29 +389,21 @@ const SignUp: React.FC<SignUpProps> = ({ isModal = false, onToggleView, onSucces
     </>
   );
 
-  // Container based on whether it's modal or full-page
   if (success) {
-    if (isModal) {
-      return <div className="w-full">{renderSuccessMessage()}</div>;
-    }
-    return (
+    return isModal ? (
+      <div className="w-full">{renderSuccessMessage()}</div>
+    ) : (
       <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center py-12 px-4">
-        <div className="max-w-md w-full text-center">
-          {renderSuccessMessage()}
-        </div>
+        <div className="max-w-md w-full text-center">{renderSuccessMessage()}</div>
       </div>
     );
   }
 
-  if (isModal) {
-    return <div className="w-full p-4">{renderForm()}</div>;
-  }
-
-  return (
+  return isModal ? (
+    <div className="w-full p-4">{renderForm()}</div>
+  ) : (
     <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center py-12 px-4">
-      <div className="max-w-md w-full">
-        {renderForm()}
-      </div>
+      <div className="max-w-md w-full">{renderForm()}</div>
     </div>
   );
 };
