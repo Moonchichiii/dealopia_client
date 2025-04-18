@@ -21,7 +21,7 @@ import 'leaflet/dist/leaflet.css';
 import { Deal } from '@/types/deals';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { useFormatters } from '@/utils/formatters';
-import { locationService } from '@/api/services';
+import { locationService } from '@/api';
 import {
   MapPin,
   Leaf,

@@ -7,7 +7,7 @@
     --color-primary-base: #9f75ff;
     --color-primary-dark: #7916ff;
     --color-primary-darker: #6b04fd;
-    
+
     --color-accent-lighter: #cffafe;
     --color-accent-light: #a5f3fc;
     --color-accent-base: #21d4fd;
@@ -19,6 +19,7 @@
     scroll-behavior: smooth;
   }
 
+  /* Default (Dark Mode) */
   body {
     @apply bg-black text-gray-100 antialiased;
     font-family: 'Inter', system-ui, sans-serif;
@@ -26,11 +27,22 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
+  /* Explicit Dark Mode for clarity */
+  .dark body {
+    @apply bg-black text-gray-100;
+  }
+
+  /* Light Mode Base */
+  .light body {
+    @apply bg-gray-50 text-gray-900;
+  }
+
   img {
     @apply max-w-full h-auto;
     aspect-ratio: attr(width) / attr(height);
   }
 
+  /* Default (Dark Mode) Gradient Text in base - might be overridden in components */
   .gradient-text {
     @apply bg-gradient-to-r bg-clip-text text-transparent;
     display: inline-block !important;
@@ -46,11 +58,18 @@
     object-fit: cover;
   }
 
+  /* Default (Dark Mode) Footer Placeholder */
   .footer-placeholder {
     height: 350px;
     border-top: 1px solid rgba(38, 38, 38, 0.5);
     background-color: rgba(10, 10, 10, 0.5);
     backdrop-filter: blur(10px);
+  }
+
+  /* Light Mode Footer Placeholder */
+  .light .footer-placeholder {
+    border-top: 1px solid rgba(229, 231, 235, 0.5);
+    background-color: rgba(255, 255, 255, 0.5);
   }
 
   @font-face {
@@ -74,6 +93,7 @@
 }
 
 @layer components {
+  /* Buttons */
   .btn {
     @apply inline-flex items-center justify-center rounded-lg font-medium transition-colors;
   }
@@ -82,33 +102,68 @@
     @apply bg-purple-500 hover:bg-purple-600 active:bg-purple-700 text-white;
   }
 
+  /* Default (Dark Mode) Secondary Button */
   .btn-secondary {
     @apply bg-gray-800 hover:bg-gray-700 active:bg-gray-600 text-white;
+  }
+
+  /* Light Mode Secondary Button */
+  .light .btn-secondary {
+    @apply bg-gray-200 hover:bg-gray-300 active:bg-gray-400 text-gray-800;
   }
 
   .btn-outline {
     @apply border border-gray-700 hover:bg-gray-800/50 text-gray-300;
   }
+  /* Light mode outline might need adjustments later */
 
+  /* Card */
+  /* Default (Dark Mode) Card */
   .card {
     @apply bg-gray-900/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-800/50;
   }
 
+  /* Light Mode Card */
+  .light .card {
+    @apply bg-white/50 backdrop-blur-sm border-gray-200/50;
+  }
+
+  /* Form Elements */
+  /* Default (Dark Mode) Form Input */
   .form-input {
-    @apply w-full bg-gray-800/50 border border-gray-700 rounded-lg px-4 py-2 text-white 
+    @apply w-full bg-gray-800/50 border border-gray-700 rounded-lg px-4 py-2 text-white
            placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50;
+  }
+
+  /* Light Mode Form Input */
+  .light .form-input {
+    @apply bg-white/50 border-gray-300 text-gray-900 placeholder-gray-500;
+    /* Keep focus rings consistent or define light mode focus */
   }
 
   .form-label {
     @apply block text-sm font-medium text-gray-300 mb-1;
   }
+  /* Light mode label might need adjustments later */
+  .light .form-label {
+     @apply text-gray-700; 
+  }
 
+
+  /* Gradient Text */
+  /* Default (Dark Mode) Gradient Text */
   .gradient-text {
     @apply bg-gradient-to-r from-purple-400 via-white to-cyan-400 bg-clip-text text-transparent;
     display: inline-block;
     width: 100%;
   }
 
+  /* Light Mode Gradient Text */
+  .light .gradient-text {
+    @apply from-purple-600 via-purple-500 to-cyan-600;
+  }
+
+  /* Video Background */
   .video-background {
     position: absolute;
     top: 0;
@@ -130,13 +185,18 @@
     min-height: 100%;
   }
 
+  /* Card Media & Content Placeholders */
   .card-media {
     position: relative;
     aspect-ratio: 16/9;
     width: 100%;
-    background-color: #1a1a1a;
+    background-color: #1a1a1a; /* Dark mode default */
     overflow: hidden;
   }
+  .light .card-media {
+    background-color: #e5e7eb; /* Light mode default */
+  }
+
 
   .card-media > img {
     position: absolute;
@@ -168,8 +228,11 @@
     width: 100%;
     height: 0;
     padding-bottom: 56.25%;
-    background-color: #1a1a1a;
+    background-color: #1a1a1a; /* Dark mode default */
     overflow: hidden;
+  }
+  .light .aspect-16-9-container {
+     background-color: #e5e7eb; /* Light mode default */
   }
 
   .aspect-16-9-content {
@@ -201,6 +264,7 @@
   }
 }
 
+/* Animations and keyframes */
 .animate-fade-in {
   animation: fadeIn 0.8s ease-out forwards;
 }
@@ -229,27 +293,145 @@
   }
 }
 
+/* Portal and modal containers */
 #modal-root {
   position: relative;
   z-index: 50;
 }
 
+/* Mobile menu portal and overlay */
+#overlay-root {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 9999;
+  pointer-events: none;
+}
+
+#overlay-root > * {
+  pointer-events: auto;
+}
+
+/* Mobile menu specific styles */
+/* Default (Dark Mode) Mobile Menu Overlay */
+.mobile-menu-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(4px);
+  z-index: 9998;
+}
+
+/* Light Mode Mobile Menu Overlay */
+.light .mobile-menu-overlay {
+  background-color: rgba(0, 0, 0, 0.5); /* Adjusted light mode overlay */
+  /* Consider if backdrop-filter is desired in light mode */
+  /* backdrop-filter: blur(2px); */
+}
+
+/* Default (Dark Mode) Mobile Menu Container */
+.mobile-menu-container {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 75%;
+  max-width: 320px;
+  background-color: #111;
+  border-left: 1px solid rgba(75, 85, 99, 0.3);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  transform: translateX(0);
+  transition: transform 0.3s ease-in-out;
+}
+
+/* Light Mode Mobile Menu Container */
+.light .mobile-menu-container {
+  background-color: white;
+  border-left: 1px solid rgba(229, 231, 235, 0.5);
+  /* Text color inside the menu will inherit from .light body, adjust if needed */
+}
+
+
+/* Fix animations for mobile menu */
+@media (prefers-reduced-motion: no-preference) {
+  .mobile-menu-enter {
+    transform: translateX(100%);
+  }
+
+  .mobile-menu-enter-active {
+    transform: translateX(0);
+    transition: transform 300ms;
+  }
+
+  .mobile-menu-exit {
+    transform: translateX(0);
+  }
+
+  .mobile-menu-exit-active {
+    transform: translateX(100%);
+    transition: transform 300ms;
+  }
+}
+
+/* Ensure menu is always visible when open */
+@media (max-width: 768px) {
+  .mobile-menu-container {
+    display: flex !important;
+  }
+
+  .mobile-menu-overlay {
+    display: block !important;
+  }
+}
+
+/* Fix for potential CSS transition issues */
+.motion-div {
+  will-change: transform;
+  backface-visibility: hidden;
+}
+
+/* Leaflet map styling */
+/* Default (Dark Mode) Leaflet Container */
 .leaflet-container {
   background-color: #1f2937;
 }
+/* Light Mode Leaflet Container */
+.light .leaflet-container {
+  background-color: #f3f4f6; /* Example light mode background */
+}
 
+/* Default (Light Mode) Leaflet Popup - Assuming popups are generally light */
 .leaflet-popup-content-wrapper {
   border-radius: 0.75rem;
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
   background-color: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(4px);
   border: 1px solid #e5e5e5;
+  color: #1f2937; /* Ensure text is dark */
 }
 
 .leaflet-popup-tip {
   background-color: rgba(255, 255, 255, 0.95);
 }
 
+/* Dark Mode Leaflet Popup */
+.dark .leaflet-popup-content-wrapper {
+  background-color: rgba(31, 41, 55, 0.95); /* Dark background */
+  border: 1px solid #4b5563;
+  color: #f3f4f6; /* Light text */
+}
+
+.dark .leaflet-popup-tip {
+  background-color: rgba(31, 41, 55, 0.95);
+}
+
+
+/* Default (Light Mode) Leaflet Controls - Assuming controls are generally light */
 .leaflet-control-zoom {
   border: none !important;
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
@@ -260,13 +442,27 @@
   background-color: rgba(255, 255, 255, 0.95) !important;
   backdrop-filter: blur(4px) !important;
   border: 1px solid #e5e5e5 !important;
-  color: #1f2937 !important;
+  color: #1f2937 !important; /* Dark icon color */
 }
 
 .leaflet-control-zoom-in:hover,
 .leaflet-control-zoom-out:hover {
   background-color: #f8f8f8 !important;
 }
+
+/* Dark Mode Leaflet Controls */
+.dark .leaflet-control-zoom-in,
+.dark .leaflet-control-zoom-out {
+  background-color: rgba(55, 65, 81, 0.95) !important; /* Dark background */
+  border: 1px solid #4b5563 !important;
+  color: #f3f4f6 !important; /* Light icon color */
+}
+
+.dark .leaflet-control-zoom-in:hover,
+.dark .leaflet-control-zoom-out:hover {
+  background-color: #4b5563 !important;
+}
+
 
 .leaflet-bar {
   border-radius: 0.75rem !important;
@@ -283,6 +479,27 @@
   border-bottom-right-radius: 0.75rem !important;
 }
 
+/* Z-index organization */
+.fixed.top-0.left-0.right-0.z-150 {
+  z-index: 150;
+}
+
+.footer-placeholder,
+footer {
+  position: relative;
+  z-index: 10;
+}
+
+.min-h-screen.flex.flex-col.relative {
+  isolation: isolate;
+}
+
+main.flex-grow.w-full {
+  position: relative;
+  z-index: 10;
+}
+
+/* Responsive adjustments */
 @media (max-width: 768px) {
   .hero-section {
     min-height: 600px !important;
@@ -333,23 +550,3 @@
     padding-bottom: 3rem;
   }
 }
-
-.footer-placeholder,
-footer {
-  position: relative;
-  z-index: 10;
-}
-
-.min-h-screen.flex.flex-col.relative {
-  isolation: isolate;
-}
-
-main.flex-grow.w-full {
-  position: relative;
-  z-index: 10;
-}
-
-header.fixed.top-0.left-0.right-0 {
-  z-index: 150;
-}
-

@@ -29,8 +29,13 @@ const getPasswordStrengthLabel = (strength: number): { label: string; color: str
   return { label: 'Strong', color: 'text-green-500' };
 };
 
-// Format error messages from API responses
-const formatAuthError = (error: any): string => {
+type ApiErrorResponse = {
+  response?: {
+    data?: any;
+  };
+};
+
+const formatAuthError = (error: ApiErrorResponse): string => {
   let errorMessage = 'An error occurred. Please try again.';
   const errorData = error.response?.data;
  
@@ -65,14 +70,19 @@ const formatAuthError = (error: any): string => {
   return errorMessage;
 };
 
-// Hook for password reset functionality
+interface ResetPasswordParams {
+  token: string;
+  password: string;
+  password_confirm: string;
+}
+
 const usePasswordReset = () => {
   const requestPasswordReset = useCallback(async (email: string) => {
     try {
       await authService.requestPasswordReset(email);
       return true;
     } catch (error) {
-      const errorMessage = formatAuthError(error);
+      const errorMessage = formatAuthError(error as ApiErrorResponse);
       toast.error(errorMessage);
       throw error;
     }
@@ -82,16 +92,12 @@ const usePasswordReset = () => {
     token,
     password,
     password_confirm
-  }: {
-    token: string;
-    password: string;
-    password_confirm: string;
-  }) => {
+  }: ResetPasswordParams) => {
     try {
       await authService.resetPassword(token, password, password_confirm);
       return true;
     } catch (error) {
-      const errorMessage = formatAuthError(error);
+      const errorMessage = formatAuthError(error as ApiErrorResponse);
       toast.error(errorMessage);
       throw error;
     }
@@ -100,7 +106,6 @@ const usePasswordReset = () => {
   return { requestPasswordReset, resetPassword };
 };
 
-// Create schema for password reset form
 const passwordResetSchema = z.object({
   password: z
     .string()
@@ -117,7 +122,6 @@ const passwordResetSchema = z.object({
 
 type PasswordResetFormData = z.infer<typeof passwordResetSchema>;
 
-// Step 1: Request Reset Form Component
 const RequestResetForm = () => {
   const [email, setEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -138,8 +142,8 @@ const RequestResetForm = () => {
     try {
       await requestPasswordReset(email);
       setIsSuccess(true);
-    } catch (err: any) {
-      setError(err.message || 'Failed to request password reset. Please try again.');
+    } catch (err: unknown) {
+      setError((err as Error).message || 'Failed to request password reset. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -147,7 +151,7 @@ const RequestResetForm = () => {
 
   if (isSuccess) {
     return (
-      <div className="text-center">
+      <div className="text-center"></div>
         <div className="bg-primary-500/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
           <CheckCircle className="w-8 h-8 text-primary-400" />
         </div>
@@ -218,8 +222,11 @@ const RequestResetForm = () => {
   );
 };
 
-// Step 2: Reset Password Form Component
-const ResetPasswordForm = ({ token }: { token: string }) => {
+interface ResetPasswordFormProps {
+  token: string;
+}
+
+const ResetPasswordForm = ({ token }: ResetPasswordFormProps) => {
   const navigate = useNavigate();
   const { resetPassword } = usePasswordReset();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -260,8 +267,8 @@ const ResetPasswordForm = ({ token }: { token: string }) => {
           state: { message: 'Your password has been reset successfully. You can now sign in with your new password.' }
         });
       }, 3000);
-    } catch (err: any) {
-      setError(err.message || 'Failed to reset password. Please try again.');
+    } catch (err: unknown) {
+      setError((err as Error).message || 'Failed to reset password. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -377,7 +384,6 @@ const ResetPasswordForm = ({ token }: { token: string }) => {
   );
 };
 
-// Main Password Reset Component
 const PasswordReset = () => {
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token');

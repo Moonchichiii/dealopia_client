@@ -1,211 +1,200 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useState, useCallback } from 'react';
 import { toast } from 'react-toastify';
-import { authService } from '@/api/services/authService';
-import { RegisterData } from '@/types';
+import { useNavigate } from 'react-router-dom';
+import authService from '@/api/auth/authService';
+import type {
+  UserProfile,
+  LoginCredentials,
+  RegisterData,
+  TwoFactorVerifyParams
+} from '@/types/auth';
 
-// Helper function to format error messages
-export function formatAuthError(error: unknown): string {
-  let errorMessage = 'An error occurred. Please try again.';
-  if (error && typeof error === 'object' && 'response' in error) {
-    const errObj = error as { response?: { data?: unknown } };
-    const errorData = errObj.response?.data;
-    if (typeof errorData === 'string') {
-      errorMessage = errorData;
-    } else if (errorData && typeof errorData === 'object' && 'detail' in errorData) {
-      errorMessage = String((errorData as { detail: string }).detail);
-    } else if (
-      errorData &&
-      typeof errorData === 'object' &&
-      'non_field_errors' in errorData
-    ) {
-      const nonFieldErrors = (errorData as { non_field_errors: unknown }).non_field_errors;
-      errorMessage = Array.isArray(nonFieldErrors)
-        ? nonFieldErrors.join(', ')
-        : String(nonFieldErrors);
-    } else if (errorData && typeof errorData === 'object' && 'error' in errorData) {
-      errorMessage = String((errorData as { error: unknown }).error);
-    } else if (errorData && typeof errorData === 'object') {
-      errorMessage = Object.entries(errorData)
-        .filter(([field]) => field !== 'status' && field !== 'code')
-        .map(([field, errors]) =>
-          Array.isArray(errors)
-            ? `${field}: ${errors.join(', ')}`
-            : `${field}: ${errors}`
-        )
-        .join('; ');
-    }
-  } else if (error instanceof Error) {
-    errorMessage = error.message;
-  }
-  return errorMessage;
-}
+const USER_QUERY_KEY = ['auth', 'user'];
 
-export const USER_QUERY_KEY = ['auth', 'user'] as const;
+/**
+ * Check if any authentication cookies are present
+ */
+const hasAuthCookies = () => {
+  return document.cookie.includes('auth-token') ||
+         document.cookie.includes('sessionid') ||
+         document.cookie.includes('refresh-token');
+};
 
+/**
+ * Format error messages consistently
+ */
+const formatErrorMessage = (error: unknown): string => {
+  if (error instanceof Error) return error.message;
+  if (typeof error === 'string') return error;
+  return 'Unknown error';
+};
+
+/**
+ * Fetch the current user profile.
+ */
 export function useUser() {
-  return useQuery({
+  // Use state to track cookie presence
+  const [hasCookies, setHasCookies] = useState(hasAuthCookies());
+  
+  // Listen for cookie changes (via polling or events)
+  useEffect(() => {
+    const checkCookies = () => {
+      const cookiesExist = hasAuthCookies();
+      if (hasCookies !== cookiesExist) {
+        setHasCookies(cookiesExist);
+      }
+    };
+    
+    // Check every few seconds
+    const interval = setInterval(checkCookies, 3000);
+    return () => clearInterval(interval);
+  }, [hasCookies]);
+  
+  // Listen for logout events
+  useEffect(() => {
+    const handleLogout = () => {
+      setHasCookies(false);
+    };
+    
+    window.addEventListener('auth:logout', handleLogout);
+    return () => window.removeEventListener('auth:logout', handleLogout);
+  }, []);
+
+  const query = useQuery({
     queryKey: USER_QUERY_KEY,
     queryFn: () => authService.getProfile(),
-    retry: 1,
+    staleTime: 5 * 60 * 1000, // 5 minutes
     refetchOnWindowFocus: false,
-    staleTime: 1000 * 60 * 5,
-    initialData: () => authService.getUserFromStorage(),
-    enabled: authService.isAuthenticated(),
+    retry: (failureCount, error) => {
+      if (failureCount > 0 || error.message?.includes('401')) {
+        return false;
+      }
+      return true;
+    },
+    enabled: hasCookies,
   });
+
+  return {
+    ...query,
+    isAuthenticated: Boolean(query.data)
+  };
 }
 
+/**
+ * Hook for logging in.
+ */
 export function useLogin() {
   const queryClient = useQueryClient();
-
   const mutation = useMutation({
-    mutationFn: (credentials: unknown) => {
-      if (typeof credentials === 'object' && credentials !== null && 'provider' in credentials) {
-        return authService.socialLogin(credentials as Record<string, unknown>);
-      } else {
-        return authService.login(credentials as Record<string, unknown>);
-      }
-    },
+    mutationFn: (credentials: LoginCredentials) => authService.login(credentials),
     onSuccess: (data) => {
-      // Check if 2FA is required
-      if ((data as { requires_2fa?: boolean }).requires_2fa) {
-        return data;
+      // Check for 2FA requirement
+      if (data && typeof data === 'object' && 'requires_2fa' in data) {
+        return;
       }
-      queryClient.invalidateQueries({ queryKey: USER_QUERY_KEY });
-      toast.success('Login successful!');
-      return data;
+
+      queryClient.setQueryData(USER_QUERY_KEY, data);
+      toast.success('Logged in successfully');
     },
-    onError: (error: unknown) => {
-      const errorMessage = formatAuthError(error);
-      toast.error(errorMessage);
-      throw error;
+    onError: (error) => {
+      toast.error(`Login failed: ${formatErrorMessage(error)}`);
     },
   });
-
-  return {
-    login: mutation.mutateAsync,
-    isLoading: mutation.isPending,
-    error: mutation.error,
-  };
+  return mutation;
 }
 
+/**
+ * Hook for registering a new user.
+ */
 export function useRegister() {
   const queryClient = useQueryClient();
-
   const mutation = useMutation({
     mutationFn: (userData: RegisterData) => authService.register(userData),
-    onSuccess: (response) => {
-      if (!(response as { requiresVerification?: boolean }).requiresVerification) {
-        queryClient.invalidateQueries({ queryKey: USER_QUERY_KEY });
-      }
-      return response;
+    onSuccess: (data) => {
+      queryClient.setQueryData(USER_QUERY_KEY, data);
+      toast.success('Registration successful');
     },
-    onError: (error: unknown) => {
-      const errorMessage = formatAuthError(error);
-      toast.error(errorMessage);
-      throw error;
+    onError: (error) => {
+      toast.error(`Registration failed: ${formatErrorMessage(error)}`);
     },
   });
-
-  return {
-    register: mutation.mutateAsync,
-    isLoading: mutation.isPending,
-    error: mutation.error,
-  };
+  return mutation;
 }
 
+/**
+ * Hook for logging out.
+ */
 export function useLogout() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-
-  const hardLogout = (): boolean => {
-    queryClient.removeQueries({ queryKey: USER_QUERY_KEY });
+  
+  // Clear all query cache on logout
+  const clearCache = useCallback(() => {
     queryClient.clear();
-
-    sessionStorage.removeItem('tanstack-query-state');
-
-    document.cookie.split(';').forEach((c) => {
-      document.cookie = c
-        .replace(/^ +/, '')
-        .replace(/=.*/, `=;expires=${new Date().toUTCString()};path=/`);
-    });
-
-    ['sessionid', 'csrftoken', 'refresh_token', 'access_token', 'auth_token', 'refresh-token'].forEach(
-      (cookieName) => {
-        document.cookie = `${cookieName}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;`;
-        document.cookie = `${cookieName}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=${window.location.hostname};`;
-      }
-    );
-
-    authService.clearAuthData();
-    localStorage.clear();
-    sessionStorage.clear();
-
-    toast.info('You have been logged out');
-    return true;
-  };
-
+  }, [queryClient]);
+  
+  // Listen for logout events
+  useEffect(() => {
+    window.addEventListener('auth:logout', clearCache);
+    return () => window.removeEventListener('auth:logout', clearCache);
+  }, [clearCache]);
+  
   const mutation = useMutation({
-    mutationFn: async () => {
-      try {
-        await authService.logout();
-      } catch (error) {
-        console.error('Server logout failed:', error);
-      }
-      return hardLogout();
-    },
-    onSettled: () => {
+    mutationFn: () => authService.logout(),
+    onSuccess: () => {
       navigate('/', { replace: true });
+      toast.info('Logged out successfully');
+    },
+    onError: (error) => {
+      clearCache();
+      navigate('/', { replace: true });
+      toast.error(`Logout error: ${formatErrorMessage(error)}`);
     },
   });
-
-  return {
-    logout: mutation.mutateAsync,
-    isLoading: mutation.isPending,
-  };
+  return mutation;
 }
 
+/**
+ * Hook for verifying a two-factor authentication token.
+ */
 export function useVerifyTwoFactor() {
   const queryClient = useQueryClient();
-
   const mutation = useMutation({
-    mutationFn: ({ userId, token }: { userId: string; token: string }) =>
-      authService.verifyTwoFactor(userId, token),
-    onSuccess: (response) => {
-      queryClient.invalidateQueries({ queryKey: USER_QUERY_KEY });
-      return response;
+    mutationFn: (params: TwoFactorVerifyParams) => authService.verifyTwoFactor(params),
+    onSuccess: (data) => {
+      queryClient.setQueryData(USER_QUERY_KEY, data);
+      toast.success('Two-factor authentication verified');
     },
-    onError: (err: unknown) => {
-      const errorMessage = formatAuthError(err);
-      toast.error(errorMessage);
-      throw err;
+    onError: (error) => {
+      toast.error(`Two-factor verification failed: ${formatErrorMessage(error)}`);
     },
   });
-
-  return {
-    verifyTwoFactor: mutation.mutateAsync,
-    isLoading: mutation.isPending,
-  };
+  return mutation;
 }
 
-export function checkIsAuthenticated(): boolean {
-  return authService.isAuthenticated();
-}
-
+/**
+ * Main authentication hook to bundle all functionality.
+ */
 export function useAuth() {
-  const { data: user, isLoading: isLoadingUser } = useUser();
-  const { login: loginFn, isLoading: isLoadingLogin } = useLogin();
-  const { register: registerFn, isLoading: isLoadingRegister } = useRegister();
-  const { logout: logoutFn, isLoading: isLoadingLogout } = useLogout();
-  const { verifyTwoFactor } = useVerifyTwoFactor();
+  const userQuery = useUser();
+  const loginMutation = useLogin();
+  const registerMutation = useRegister();
+  const logoutMutation = useLogout();
+  const verifyTwoFactorMutation = useVerifyTwoFactor();
 
   return {
-    user,
-    isAuthenticated: !!user,
-    isLoading: isLoadingUser || isLoadingLogin || isLoadingRegister || isLoadingLogout,
-    login: loginFn,
-    register: registerFn,
-    logout: logoutFn,
-    verifyTwoFactor,
+    user: userQuery.data,
+    isAuthenticated: userQuery.isAuthenticated,
+    isLoading:
+      userQuery.isLoading ||
+      loginMutation.isPending ||
+      registerMutation.isPending ||
+      logoutMutation.isPending,
+    refetchUser: userQuery.refetch,
+    login: loginMutation.mutateAsync,
+    register: registerMutation.mutateAsync,
+    logout: logoutMutation.mutateAsync,
+    verifyTwoFactor: verifyTwoFactorMutation.mutateAsync,
   };
 }

@@ -2,7 +2,7 @@ import { useState, lazy, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ChevronDown, ShoppingBag, Leaf } from 'lucide-react';
 import { motion, useScroll, useTransform } from 'framer-motion';
-import { DealCard } from '@/components/DealCard';
+import { DealCard } from '@/components/ui/DealCard';
 import SearchBar from '@/components/search/SearchBar';
 import SearchSection from '@/components/sections/SearchSection';
 import { useFeaturedDeals } from '@/hooks/useDeals';

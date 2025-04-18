@@ -1,6 +1,7 @@
+// src/pages/dashboard/Dashboard.tsx
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Store, BarChart as ChartBar, Package, Users, Settings, CreditCard } from 'lucide-react';
+import { Store, ChartBar, Package, Users, Settings, CreditCard } from 'lucide-react';
 import { useUser } from '@/hooks/useAuth';
 
 const Dashboard = () => {
@@ -8,18 +9,23 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const [userRole, setUserRole] = useState<'customer' | 'shopkeeper'>('customer');
 
+  // Determine role based on user data.
   useEffect(() => {
     if (user?.notification_preferences?.role === 'shopkeeper') {
       setUserRole('shopkeeper');
+    } else {
+      setUserRole('customer');
     }
   }, [user]);
 
+  // Although ProtectedRoute should handle redirection, we include a safeguard.
   useEffect(() => {
     if (!isLoading && !user) {
       navigate('/signin');
     }
   }, [isLoading, user, navigate]);
 
+  // Define menu items for customer and shopkeeper roles.
   const customerMenuItems = [
     { icon: Package, label: 'My Orders', href: '/dashboard/orders' },
     { icon: Store, label: 'Saved Deals', href: '/dashboard/saved' },
@@ -50,9 +56,8 @@ const Dashboard = () => {
     );
   }
 
-  if (!user) {
-    return null;
-  }
+  // This safeguard: if no user exists (should not happen), return null.
+  if (!user) return null;
 
   return (
     <div className="min-h-screen pt-16">
@@ -71,7 +76,7 @@ const Dashboard = () => {
                   <p className="text-sm text-neutral-400 capitalize">{userRole}</p>
                 </div>
               </div>
-              
+
               <nav className="space-y-2">
                 {menuItems.map((item) => (
                   <a
@@ -92,7 +97,7 @@ const Dashboard = () => {
               <h2 className="text-2xl font-semibold text-white mb-6">
                 {userRole === 'shopkeeper' ? 'Store Overview' : 'My Dashboard'}
               </h2>
-              
+              {/* Content for each role can be added here */}
               {userRole === 'shopkeeper' ? (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className="bg-neutral-800/50 rounded-xl p-4">

@@ -50,21 +50,18 @@ export const ENDPOINTS = {
     }
 };
 
-// Import services once
-import dealServiceImport from '@/api/services/dealService';
-import locationServiceImport from '@/api/services/locationService';
-import categoryServiceImport from '@/api/services/categoryService';
-import shopServiceImport from '@/api/services/shopService';
-import authServiceImport from '@/api/services/authService';
+import dealServiceImport from '@/api/deals/dealService';
+import locationServiceImport from '@/api/locations/locationService';
+import categoryServiceImport from '@/api/categories/categoryService';
+import shopServiceImport from '@/api/shops/shopService';
+import authServiceImport from '@/api/auth/authService';
 
-// Export named exports with different names
 export const dealService = dealServiceImport;
 export const locationService = locationServiceImport;
 export const categoryService = categoryServiceImport;
 export const shopService = shopServiceImport;
 export const authService = authServiceImport;
 
-// Export default object
 export default {
     deals: dealServiceImport,
     locations: locationServiceImport,

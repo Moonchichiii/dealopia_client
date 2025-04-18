@@ -1,7 +1,6 @@
-// src/components/ProductDetail.tsx
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Product, Deal, productService } from '../api/productService';
+import { Product, Deal, productService } from '@/api/';
 
 interface ProductPreviewData {
   product: Product;
@@ -11,13 +10,15 @@ interface ProductPreviewData {
 
 const ProductDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [productData, setProductData] = useState<ProductPreviewData | null>(null);
-  const [quantity, setQuantity] = useState<number>(1);
+  const [quantity, setQuantity] = useState(1);
 
   useEffect(() => {
     const fetchProductData = async () => {
+      if (!id) return;
+      
       try {
         setLoading(true);
         const data = await productService.getProductPreview(Number(id));
@@ -34,9 +35,7 @@ const ProductDetail: React.FC = () => {
       }
     };
 
-    if (id) {
-      fetchProductData();
-    }
+    fetchProductData();
   }, [id]);
 
   const handleQuantityChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -44,7 +43,6 @@ const ProductDetail: React.FC = () => {
   };
 
   const handleAddToCart = () => {
-    // Implement your cart logic here
     alert(`Added ${quantity} item(s) to cart`);
   };
 
@@ -59,10 +57,9 @@ const ProductDetail: React.FC = () => {
   const { product, related_products, deal } = productData;
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8"></div>
       <div className="bg-white shadow-lg rounded-lg overflow-hidden">
         <div className="md:flex">
-          {/* Product Image */}
           <div className="md:w-1/2 bg-gray-100">
             {product.image_url ? (
               <img src={product.image_url} alt={product.name} className="w-full h-96 object-contain p-4" />
@@ -73,9 +70,8 @@ const ProductDetail: React.FC = () => {
             )}
           </div>
 
-          {/* Product Details */}
           <div className="md:w-1/2 p-6">
-            <div className="flex justify-between items-start">
+            <div className="flex justify-between items-start"></div>
               <h1 className="text-3xl font-bold text-gray-800">{product.name}</h1>
               {product.is_featured && (
                 <span className="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">
@@ -102,7 +98,6 @@ const ProductDetail: React.FC = () => {
               )}
             </div>
 
-            {/* Deal information if available */}
             {deal && (
               <div className="mt-4 p-4 border-2 border-yellow-400 rounded-lg bg-yellow-50">
                 <h2 className="text-lg font-bold text-yellow-800">{deal.title}</h2>
@@ -117,7 +112,6 @@ const ProductDetail: React.FC = () => {
               <p className="text-gray-600">{product.description}</p>
             </div>
 
-            {/* Stock Information */}
             <div className="mt-6">
               {!product.is_available || product.stock_quantity <= 0 ? (
                 <p className="text-red-600 font-semibold">Out of stock</p>
@@ -128,7 +122,6 @@ const ProductDetail: React.FC = () => {
               )}
             </div>
 
-            {/* Add to Cart Section */}
             {product.is_available && product.stock_quantity > 0 && (
               <div className="mt-6 flex items-end">
                 <div className="mr-4">
@@ -158,7 +151,6 @@ const ProductDetail: React.FC = () => {
               </div>
             )}
 
-            {/* Product Info */}
             <div className="mt-8">
               <p className="text-sm text-gray-500">SKU: {product.sku}</p>
               {product.category_names && product.category_names.length > 0 && (
@@ -176,16 +168,15 @@ const ProductDetail: React.FC = () => {
         </div>
       </div>
 
-      {/* Related Products Section */}
       {related_products && related_products.length > 0 && (
         <div className="mt-12">
           <h2 className="text-2xl font-bold text-gray-800 mb-6">Related Products</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {related_products.map((product) => (
-              <Link key={product.id} to={`/product/${product.id}`}>
+            {related_products.map((relatedProduct) => (
+              <Link key={relatedProduct.id} to={`/product/${relatedProduct.id}`}></Link>
                 <div className="bg-white shadow-md rounded-lg overflow-hidden h-full hover:shadow-lg transition-shadow">
-                  {product.image_url ? (
-                    <img src={product.image_url} alt={product.name} className="w-full h-48 object-cover" />
+                  {relatedProduct.image_url ? (
+                    <img src={relatedProduct.image_url} alt={relatedProduct.name} className="w-full h-48 object-cover" />
                   ) : (
                     <div className="w-full h-48 bg-gray-200 flex items-center justify-center">
                       <span className="text-gray-400">No image</span>
@@ -193,20 +184,20 @@ const ProductDetail: React.FC = () => {
                   )}
                   
                   <div className="p-4">
-                    <h3 className="text-lg font-semibold text-gray-800 mb-2">{product.name}</h3>
+                    <h3 className="text-lg font-semibold text-gray-800 mb-2">{relatedProduct.name}</h3>
                     
-                    <div className="flex justify-between items-center">
-                      {product.discount_percentage > 0 ? (
+                    <div className="flex justify-between items-center"></div>
+                      {relatedProduct.discount_percentage > 0 ? (
                         <div>
-                          <p className="text-gray-400 line-through">${product.price}</p>
-                          <p className="text-xl font-bold text-green-600">${product.discounted_price}</p>
+                          <p className="text-gray-400 line-through">${relatedProduct.price}</p>
+                          <p className="text-xl font-bold text-green-600">${relatedProduct.discounted_price}</p>
                         </div>
                       ) : (
-                        <p className="text-xl font-bold text-gray-800">${product.price}</p>
+                        <p className="text-xl font-bold text-gray-800">${relatedProduct.price}</p>
                       )}
                     </div>
                     
-                    {!product.is_available || product.stock_quantity <= 0 ? (
+                    {!relatedProduct.is_available || relatedProduct.stock_quantity <= 0 ? (
                       <p className="mt-2 text-red-600 text-sm">Out of stock</p>
                     ) : (
                       <p className="mt-2 text-green-600 text-sm">In stock</p>

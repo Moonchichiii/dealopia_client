@@ -1,8 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
-import { shopService } from '@/api/services';
+import { shopService } from '@/api';
 import { ShopFilters } from '@/types/shops';
 
-// Query key factory
 const shopKeys = {
   all: ['shops'] as const,
   lists: () => [...shopKeys.all, 'list'] as const,
@@ -12,20 +11,14 @@ const shopKeys = {
   featured: (limit?: number) => [...shopKeys.all, 'featured', limit] as const,
 };
 
-/**
- * Hook for fetching shops with filters
- */
 export const useShops = (filters?: ShopFilters) => {
   return useQuery({
     queryKey: shopKeys.list(filters),
     queryFn: () => shopService.getShops(filters),
-    staleTime: 5 * 60 * 1000, // 5 minute cache
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 };
 
-/**
- * Hook for fetching a single shop by ID
- */
 export const useShop = (id?: string | number) => {
   return useQuery({
     queryKey: id ? shopKeys.detail(id) : shopKeys.details(),
@@ -35,20 +28,14 @@ export const useShop = (id?: string | number) => {
   });
 };
 
-/**
- * Hook for fetching featured shops
- */
 export const useFeaturedShops = (limit: number = 4) => {
   return useQuery({
     queryKey: shopKeys.featured(limit),
     queryFn: () => shopService.getFeaturedShops(limit),
-    staleTime: 4 * 60 * 1000, // 4 minutes cache
+    staleTime: 4 * 60 * 1000, // 4 minutes
   });
 };
 
-/**
- * Hook for fetching shops by category
- */
 export const useShopsByCategory = (categoryId?: string | number, limit: number = 8) => {
   return useQuery({
     queryKey: [...shopKeys.lists(), 'category', categoryId, limit],
@@ -58,7 +45,6 @@ export const useShopsByCategory = (categoryId?: string | number, limit: number =
   });
 };
 
-// Export default object with all hooks
 export default {
   useShops,
   useShop,

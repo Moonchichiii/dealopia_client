@@ -1,60 +1,40 @@
-// src/layouts/Layout.tsx
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { ScrollTrigger, useGSAP } from '@/utils/useGsap';
-import CookieConsent from '@/components/CookieConsent';
+import CookieConsent from '@/components/utils/CookieConsent';
 import Header from '@/components/layout/Header';
-import Loader from '@/components/Loader';
-
+import Loader from '@/components/ui/Loader';
+import { ScrollToTopButton } from '@/components/utils/ScrollToTop';
+import { useTheme } from '@/context/ThemeContext';
 const Footer = lazy(() => import('@/components/layout/Footer'));
 
 const Layout = () => {
   const location = useLocation();
   const isHomePage = location.pathname === '/';
   const [showFooter, setShowFooter] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const { theme, toggleTheme } = useTheme();
+  const isDarkMode = theme === 'dark';
 
-  // On mount, check local storage or user’s preference.
-  useEffect(() => {
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-      setIsDarkMode(true);
-      document.documentElement.classList.add('dark');
-    } else {
-      setIsDarkMode(false);
-      document.documentElement.classList.remove('dark');
-    }
-  }, []);
-
-  const toggleTheme = () => {
-    setIsDarkMode((prevMode) => {
-      const newMode = !prevMode;
-      if (newMode) {
-        document.documentElement.classList.add('dark');
-        localStorage.setItem('theme', 'dark');
-      } else {
-        document.documentElement.classList.remove('dark');
-        localStorage.setItem('theme', 'light');
-      }
-      return newMode;
-    });
-  };
-
-  // Existing background and footer logic…
   useEffect(() => {
     if (isHomePage) {
       document.body.classList.add('home-page');
-      document.body.style.background = 'linear-gradient(135deg, rgba(76, 29, 149, 0.3) 0%, #0a0a0a 50%, rgba(22, 78, 99, 0.3) 100%)';
+      if (isDarkMode) {
+        document.body.style.background = 'linear-gradient(135deg, rgba(76, 29, 149, 0.3) 0%, #0a0a0a 50%, rgba(22, 78, 99, 0.3) 100%)';
+      } else {
+        document.body.style.background = 'linear-gradient(135deg, rgba(167, 139, 250, 0.1) 0%, #f5f7fa 50%, rgba(103, 232, 249, 0.1) 100%)';
+      }
     } else {
       document.body.classList.remove('home-page');
-      document.body.style.backgroundColor = '#0a0a0a';
+      document.body.style.backgroundColor = isDarkMode ? '#0a0a0a' : '#f5f7fa';
+      // Reset background for non-home pages
+      document.body.style.background = '';
     }
     return () => {
       document.body.classList.remove('home-page');
       document.body.style.background = '';
       document.body.style.backgroundColor = '';
     };
-  }, [isHomePage]);
+  }, [isHomePage, isDarkMode]);
 
   useGSAP(() => {
     ScrollTrigger.config({
@@ -66,37 +46,48 @@ const Layout = () => {
   }, []);
 
   useEffect(() => {
+    const footerPlaceholder = document.getElementById('footer-placeholder');
+    if (!footerPlaceholder) return; // Guard clause if placeholder not found
+
     const footerObserver = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting) {
           setShowFooter(true);
-          footerObserver.disconnect();
+          footerObserver.unobserve(footerPlaceholder); // More specific than disconnect
         }
       },
       { rootMargin: '200px' }
     );
-    const footerPlaceholder = document.getElementById('footer-placeholder');
-    if (footerPlaceholder) {
-      footerObserver.observe(footerPlaceholder);
-    }
-    return () => footerObserver.disconnect();
-  }, []);
+
+    footerObserver.observe(footerPlaceholder);
+
+    return () => {
+        // Check if the observer is still observing the element before unobserving
+        if (footerPlaceholder) {
+            footerObserver.unobserve(footerPlaceholder);
+        }
+        // Disconnect might still be useful if observing multiple elements, but unobserve is safer here
+        footerObserver.disconnect();
+    };
+  }, []); // No dependencies needed if it only runs once on mount
 
   return (
-    <div className="min-h-screen flex flex-col relative text-gray-100 isolate">
+    <div className={`min-h-screen flex flex-col relative ${isDarkMode ? 'dark text-gray-100' : 'light text-gray-900'}`}>
       <Header isDarkMode={isDarkMode} toggleTheme={toggleTheme} />
-      <main className={`flex-grow w-full ${isHomePage ? 'p-0' : 'pt-16 px-4'} relative z-10`}>
+      {/* Apply responsive padding using Tailwind classes */}
+      <main className={`flex-grow w-full ${isHomePage ? 'p-0' : 'pt-16 px-4 md:px-8'} relative z-10`}>
         <Suspense fallback={<Loader progress={50} />}>
           <Outlet />
         </Suspense>
       </main>
-      <div id="footer-placeholder" className="footer-placeholder relative z-10" style={{ display: showFooter ? 'none' : 'block' }} />
+      <div id="footer-placeholder" className="footer-placeholder relative z-10" style={{ display: showFooter ? 'none' : 'block', height: '1px' }} /> {/* Added height for observer */}
       {showFooter && (
-        <Suspense fallback={<div className="footer-placeholder relative z-10" />}>
+        <Suspense fallback={<div className="footer-placeholder relative z-10" style={{ height: '1px' }} />}> {/* Added height for consistency */}
           <Footer />
         </Suspense>
       )}
       <CookieConsent />
+      <ScrollToTopButton />
     </div>
   );
 };

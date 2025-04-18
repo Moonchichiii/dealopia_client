@@ -1,6 +1,5 @@
 import { FormEvent, useCallback, useState } from 'react';
 import { ArrowLeft, Loader } from 'lucide-react';
-
 import { useVerifyTwoFactor } from '@/hooks/useAuth';
 
 interface TwoFactorAuthProps {

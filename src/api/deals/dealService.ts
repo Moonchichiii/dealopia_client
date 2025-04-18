@@ -20,6 +20,24 @@ interface DealResponse {
   count: number;
 }
 
+/**
+ * Validate coordinate values for API requests
+ */
+const validateCoordinates = (lat?: number | null, lng?: number | null): boolean => {
+  if (lat === undefined || lat === null || lng === undefined || lng === null) {
+    return false;
+  }
+  
+  return (
+    !isNaN(lat) &&
+    !isNaN(lng) &&
+    lat >= -90 &&
+    lat <= 90 &&
+    lng >= -180 &&
+    lng <= 180
+  );
+};
+
 const dealService = {
   getDeals: async (filters?: DealFilters): Promise<DealResponse> => {
     try {
@@ -70,26 +88,98 @@ const dealService = {
     }
   },
 
-  getNearbyDeals: async (latitude: number, longitude: number, radius = 10): Promise<Deal[]> => {
+  getNearbyDeals: async (latitude: number | null, longitude: number | null, radius = 10): Promise<Deal[]> => {
     try {
-      if (!latitude || !longitude || isNaN(latitude) || isNaN(longitude)) {
+      // Validate coordinates before making the API call
+      if (!validateCoordinates(latitude, longitude)) {
         console.warn('Invalid coordinates for getNearbyDeals:', { latitude, longitude });
         return [];
       }
+
+      // Properly format coordinates to 6 decimal places for precision
       const params = {
-        lat: Number(latitude).toFixed(6),
-        lng: Number(longitude).toFixed(6),
-        radius: Math.max(0.1, Math.min(radius, 50)).toFixed(1),
+        latitude: Number(latitude).toFixed(6),
+        longitude: Number(longitude).toFixed(6),
+        radius: Math.max(0.1, Math.min(radius, 50)).toFixed(1), // Ensure radius is reasonable
       };
-      const deals = await apiClient.cachedGet<Deal[]>(
+
+      console.log('Fetching nearby deals with params:', params);
+
+      const deals = await apiClient.cachedGet<any>(
         'deals/nearby/',
         { params },
         CACHE_DURATIONS.NEARBY
       );
-      return deals;
+
+      // Handle both array and paginated response formats
+      if (Array.isArray(deals)) {
+        return deals;
+      } else if (deals && deals.results) {
+        return deals.results;
+      }
+      
+      return [];
     } catch (error: unknown) {
       console.error('getNearbyDeals error:', error);
-      return [];
+      return handleApiError(error, []);
+    }
+  },
+
+  searchDeals: async (query: string, filters?: DealFilters): Promise<DealResponse> => {
+    if (!query || query.length < 2) return { results: [], count: 0 };
+    try {
+      const mergedFilters = { search: query, ...filters };
+      const response = await apiClient.cachedGet<DealResponse>(
+        'deals/',
+        { params: mergedFilters },
+        CACHE_DURATIONS.SEARCH
+      );
+      return response;
+    } catch (error: unknown) {
+      return handleApiError(error, { results: [], count: 0 });
+    }
+  },
+
+  // New method for location-aware searches
+  searchDealsWithLocation: async (
+    query: string = '',
+    latitude?: number | null,
+    longitude?: number | null,
+    radius: number = 10,
+    additionalFilters: DealFilters = {}
+  ): Promise<DealResponse> => {
+    try {
+      // If we have valid coordinates, prioritize location-based search
+      if (validateCoordinates(latitude, longitude)) {
+        // For empty queries with location, just get nearby deals
+        if (!query || query.length < 2) {
+          const deals = await dealService.getNearbyDeals(latitude, longitude, radius);
+          return { 
+            results: deals, 
+            count: deals.length 
+          };
+        }
+        
+        // Otherwise, combine query with location
+        const filters: DealFilters = {
+          ...additionalFilters,
+          search: query,
+          latitude,
+          longitude,
+          radius
+        };
+        
+        return await apiClient.cachedGet<DealResponse>(
+          'deals/',
+          { params: filters },
+          CACHE_DURATIONS.SEARCH
+        );
+      } 
+      
+      // Fall back to regular search if no valid location
+      return await dealService.searchDeals(query, additionalFilters);
+    } catch (error: unknown) {
+      return handleApiError(error, { results: [], count: 0 });
     }
   },
 
@@ -126,27 +216,13 @@ const dealService = {
     }
   },
 
-  searchDeals: async (query: string, filters?: DealFilters): Promise<DealResponse> => {
-    if (!query || query.length < 2) return { results: [], count: 0 };
-    try {
-      const response = await apiClient.cachedGet<DealResponse>(
-        'deals/',
-        { params: { search: query, ...filters } },
-        CACHE_DURATIONS.SEARCH
-      );
-      return response;
-    } catch (error: unknown) {
-      return handleApiError(error, { results: [], count: 0 });
-    }
-  },
-
   getCategoryDeals: async (categoryId: string | number, limit = 12): Promise<Deal[]> => {
     if (!categoryId) return [];
     try {
       const response = await apiClient.cachedGet<Deal[]>(
         `categories/${categoryId}/deals/`,
         { params: { limit } },
-        CACHE_DURATIONS.SEARCH // or use an appropriate duration
+        CACHE_DURATIONS.SEARCH
       );
       return response;
     } catch (error: unknown) {
@@ -160,7 +236,7 @@ const dealService = {
       const response = await apiClient.cachedGet<Deal[]>(
         `shops/${shopId}/deals/`,
         { params: { limit } },
-        CACHE_DURATIONS.SEARCH // or use an appropriate duration
+        CACHE_DURATIONS.SEARCH
       );
       return response;
     } catch (error: unknown) {
@@ -176,8 +252,13 @@ const dealService = {
         endpoint,
         isFavorite ? { type: 'deal', id: dealId } : undefined
       );
-      apiClient.clearCache('users/favorites');
-      apiClient.clearCache(`deals/${dealId}`);
+      
+      // Invalidate relevant caches
+      if (typeof apiClient.clearCache === 'function') {
+        apiClient.clearCache('users/favorites');
+        apiClient.clearCache(`deals/${dealId}`);
+      }
+      
       return response.data;
     } catch (error: unknown) {
       console.error('Failed to toggle favorite status:', error);
@@ -186,10 +267,13 @@ const dealService = {
   },
 
   refreshDealsCache: (): void => {
-    apiClient.clearCache('deals');
-    apiClient.clearCache('deals/featured');
-    apiClient.clearCache('deals/ending-soon');
-    apiClient.clearCache('deals/nearby');
+    // Clear all deal-related caches
+    if (typeof apiClient.clearCache === 'function') {
+      apiClient.clearCache('deals');
+      apiClient.clearCache('deals/featured');
+      apiClient.clearCache('deals/ending-soon');
+      apiClient.clearCache('deals/nearby');
+    }
   },
 };
 

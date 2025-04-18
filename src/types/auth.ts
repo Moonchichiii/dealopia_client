@@ -1,8 +1,12 @@
+// src/types/auth.ts
+import { Location } from './locations';
+import { Category } from './categories';
+
 export interface UserProfile {
   id: string;
   email: string;
-  first_name: string;
-  last_name: string;
+  first_name?: string;
+  last_name?: string;
   phone_number?: string;
   avatar?: string;
   preferred_language?: string;
@@ -25,10 +29,21 @@ export interface RegisterData {
   email: string;
   password: string;
   password_confirm: string;
-  first_name: string;
-  last_name: string;
+  first_name?: string;
+  last_name?: string;
   phone_number?: string;
   preferred_language?: string;
+}
+
+export interface TwoFactorVerifyParams {
+  userId: string;
+  token: string;
+}
+
+export interface PasswordResetParams {
+  token: string;
+  password: string;
+  passwordConfirm: string;
 }
 
 export interface AuthTokens {

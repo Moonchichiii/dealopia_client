@@ -49,7 +49,7 @@ const CookieConsent: FC = () => {
           backdropFilter: "blur(10px)",
           border: "1px solid rgba(139, 92, 246, 0.2)",
           position: "fixed",
-          zIndex: 40,
+          zIndex: 1400,
           padding: "1rem",
           margin: "1rem",
           width: "calc(100% - 2rem)",

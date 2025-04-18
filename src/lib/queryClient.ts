@@ -16,8 +16,8 @@ const queryClient = new QueryClient({
 const persister = createSyncStoragePersister({
   storage: window.sessionStorage,
   key: 'dealopia-query-cache',
-  serialize: (data): string => JSON.stringify(data),
-  deserialize: (data): unknown => JSON.parse(data),
+  serialize: (data) => JSON.stringify(data),
+  deserialize: (data) => JSON.parse(data),
 });
 
 persistQueryClient({
@@ -27,30 +27,17 @@ persistQueryClient({
   dehydrateOptions: {
     shouldDehydrateQuery: (query) => {
       const queryKey = query.queryKey;
-      
-      if (Array.isArray(queryKey)) {
-        if (
-          queryKey[0] === 'auth' || 
-          (queryKey.length > 1 && queryKey[0] === 'user') ||
-          queryKey.join('/').includes('auth') ||
-          queryKey.join('/').includes('login') ||
-          queryKey.join('/').includes('register')
-        ) {
-          return false;
-        }
-      }
-      
-      if (query.state.status !== 'success') {
+      if (Array.isArray(queryKey) && queryKey.some((key) => {
+        return typeof key === 'string' && /auth|user/i.test(key);
+      })) {
         return false;
       }
-      
-      if (query.state.error) {
+      if (query.state.status !== 'success' || query.state.error) {
         return false;
       }
-      
       return true;
-    }
-  }
+    },
+  },
 });
 
 export { queryClient };

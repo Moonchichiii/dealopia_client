@@ -1,13 +1,14 @@
 import { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-// Third-party imports
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { Github, Tag, Twitter } from 'lucide-react';
+import { Github, Tag } from 'lucide-react';
+
+import Privacy from '@/components/layout/Privacy';
+import Terms from '@/components/layout/Terms';
 
 gsap.registerPlugin(ScrollTrigger);
 
-// Custom hook for footer animation
 const useFooterAnimation = (footerRef: React.RefObject<HTMLElement>) => {
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -33,21 +34,26 @@ const useFooterAnimation = (footerRef: React.RefObject<HTMLElement>) => {
   }, [footerRef]);
 };
 
-// Footer link item type
 type FooterLinkProps = {
   to: string;
   label: string;
+  component?: React.ReactNode;
 };
 
-const FooterLink = ({ to, label }: FooterLinkProps) => (
+const FooterLink = ({ to, label, component }: FooterLinkProps) => (
   <li>
-    <Link to={to} className="text-neutral-400 hover:text-white transition-colors">
-      {label}
-    </Link>
+    {component ? (
+      <Link to={to} className="text-neutral-400 hover:text-white transition-colors">
+        {label}
+      </Link>
+    ) : (
+      <Link to={to} className="text-neutral-400 hover:text-white transition-colors">
+        {label}
+      </Link>
+    )}
   </li>
 );
 
-// Footer link section component
 type FooterSectionProps = {
   title: string;
   links: FooterLinkProps[];
@@ -58,7 +64,7 @@ const FooterSection = ({ title, links }: FooterSectionProps) => (
     <h3 className="font-display font-semibold text-white mb-4">{title}</h3>
     <ul className="space-y-2">
       {links.map((link) => (
-        <FooterLink key={link.to} to={link.to} label={link.label} />
+        <FooterLink key={link.to} {...link} />
       ))}
     </ul>
   </div>
@@ -70,8 +76,8 @@ const Footer: React.FC = () => {
 
   const companyLinks = [
     { to: "/about", label: "About Us" },
-    { to: "/privacy", label: "Privacy Policy" },
-    { to: "/terms", label: "Terms of Service" }
+    { to: "/privacy", label: "Privacy Policy", component: <Privacy /> },
+    { to: "/terms", label: "Terms of Service", component: <Terms /> }
   ];
 
   const supportLinks = [
@@ -116,14 +122,7 @@ const Footer: React.FC = () => {
               >
                 <Github size={24} />
               </a>
-              <a
-                href="https://twitter.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-neutral-400 hover:text-white transition-colors"
-              >
-                <Twitter size={24} />
-              </a>
+              
             </div>
           </div>
         </div>

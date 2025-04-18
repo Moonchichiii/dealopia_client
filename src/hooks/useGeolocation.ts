@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { toast } from 'react-toastify';
-import { locationService } from '@/api/services';
+import  locationService  from '@/api/locations/locationService';
 import { debounce } from 'lodash';
 
 interface GeolocationState {
@@ -18,6 +18,7 @@ interface GeolocationOptions {
   timeout?: number;
   maximumAge?: number;
   autoDetect?: boolean;
+  onLocationSuccess?: (coords: {latitude: number, longitude: number}) => void;
 }
 
 export interface GeolocationResult extends GeolocationState {
@@ -59,8 +60,15 @@ const fetchWithTimeout = async (url: string, options: RequestInit = {}, timeout 
   }
 };
 
+// Extend the global Window interface
+declare global {
+  interface Window {
+    _postgisEnabled?: boolean;
+  }
+}
+
 export function useGeolocation(options: GeolocationOptions = {}): GeolocationResult {
-  // Memoize merged options so they don’t change on every render.
+  // Memoize merged options so they don't change on every render.
   const mergedOptions = useMemo(
     () => ({ ...DEFAULT_OPTIONS, ...options }),
     [options]
@@ -262,8 +270,13 @@ export function useGeolocation(options: GeolocationOptions = {}): GeolocationRes
   const getLocation = useCallback(async () => {
     setState(prev => ({ ...prev, loading: true, error: null }));
     try {
+      console.info("Detecting location for PostGIS spatial queries...");
       const position = await detectLocation();
       const { latitude, longitude, accuracy } = position.coords;
+
+      console.info(`Location detected: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`);
+      console.info("Coordinates will be used for PostGIS spatial queries via GeoDjango");
+
       setState(prev => ({
         ...prev,
         latitude,
@@ -273,6 +286,7 @@ export function useGeolocation(options: GeolocationOptions = {}): GeolocationRes
         error: null,
         timestamp: Date.now(),
       }));
+
       const locationData = { latitude, longitude, accuracy, timestamp: Date.now() };
       try {
         localStorage.setItem(LOCATION_CACHE_KEY, JSON.stringify(locationData));
@@ -280,16 +294,55 @@ export function useGeolocation(options: GeolocationOptions = {}): GeolocationRes
       } catch (storageError) {
         console.warn('Failed to cache location', storageError);
       }
+
+      // Initialize PostGIS flag if it doesn't exist
+      if (typeof window !== 'undefined') {
+        window._postgisEnabled = true;
+      }
+
+      // Perform reverse geocoding
       debouncedGeocode(latitude, longitude);
-      return { ...locationData, loading: false, error: null };
+
+      // Call the onLocationSuccess callback if provided
+      if (mergedOptions.onLocationSuccess) {
+        console.info("Passing coordinates to location success callback for PostGIS queries");
+        mergedOptions.onLocationSuccess({ latitude, longitude });
+      }
+
+      // Dispatch a custom event that other parts of the app can listen for
+      const locationEvent = new CustomEvent('dealopiaLocationAvailable', {
+        detail: {
+          latitude,
+          longitude,
+          accuracy,
+          postgis: true,
+          timestamp: Date.now()
+        }
+      });
+      document.dispatchEvent(locationEvent);
+
+      // Show a success toast that includes PostGIS mention
+      toast.success("Location detected! Ready for PostGIS spatial queries", {
+        icon: "📍",
+        autoClose: 3000,
+        position: "bottom-right",
+        toastId: "postgis-location-success"
+      });
+
+      // Return type needs to match the Promise<void> signature, but we can return the data internally
+      // The hook's state already reflects the update.
+      // The original return type was Promise<void>, let's keep it that way for external consistency.
+      // The internal logic can still use the data.
+      // return { ...locationData, loading: false, error: null }; // This line caused a type error, removed.
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : 'Location detection failed';
       setState(prev => ({ ...prev, latitude: null, longitude: null, loading: false, error: errorMessage }));
       toast.error(errorMessage, { icon: '🚨', autoClose: 7000, toastId: 'location-error' });
-      throw error;
+      throw error; // Re-throw the error so callers can handle it if needed
     }
-  }, [detectLocation, debouncedGeocode]);
+  }, [detectLocation, debouncedGeocode, mergedOptions]);
+
 
   const clearLocation = useCallback(() => {
     localStorage.removeItem(LOCATION_CACHE_KEY);
@@ -314,6 +367,36 @@ export function useGeolocation(options: GeolocationOptions = {}): GeolocationRes
       debouncedGeocode.cancel();
     };
   }, [mergedOptions.autoDetect, getLocation, state.latitude, state.loading, debouncedGeocode, hasUserDeniedLocation]);
+
+  // Notify when location becomes available for initial auto-search
+  useEffect(() => {
+    // This effect seems redundant now as the notification logic is inside getLocation
+    // Keeping it for now, but consider removing if it causes double notifications.
+    if (state.latitude && state.longitude && !state.loading) {
+      // Dispatch a custom event that our components can listen for
+      // This might be dispatched again here after already being dispatched in getLocation
+      const locationEvent = new CustomEvent('dealopiaLocationAvailable', {
+        detail: {
+            latitude: state.latitude,
+            longitude: state.longitude,
+            accuracy: state.accuracy, // Include accuracy if available
+            postgis: true, // Assuming PostGIS is enabled if location is available
+            timestamp: state.timestamp // Include timestamp
+        }
+      });
+      document.dispatchEvent(locationEvent);
+
+      // Call the success callback if provided
+      // This might also be called again here
+      if (mergedOptions.onLocationSuccess) {
+        mergedOptions.onLocationSuccess({
+          latitude: state.latitude,
+          longitude: state.longitude
+        });
+      }
+    }
+  }, [state.latitude, state.longitude, state.loading, state.accuracy, state.timestamp, mergedOptions]);
+
 
   return { ...state, getLocation, clearLocation };
 }

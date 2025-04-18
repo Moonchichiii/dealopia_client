@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { ChevronDown, ChevronUp, Grid, Map } from 'lucide-react';
 import SearchResults from '@/components/search/SearchResults';
-import { DealCard } from '@/components/DealCard';
+import { DealCard } from '@/components/ui/DealCard';
 import DealMap from '@/components/map/DealMap';
 
 interface SearchSectionProps {

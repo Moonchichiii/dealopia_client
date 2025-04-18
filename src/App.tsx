@@ -1,17 +1,16 @@
-import { Suspense, lazy, useEffect } from 'react';
+import { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { ToastContainer } from 'react-toastify';
 
 import { queryClient } from '@/lib/queryClient';
 import Layout from '@/components/layout/Layout';
-import Loader from '@/components/Loader';
+import Loader from '@/components/ui/Loader';
 import ProtectedRoute from '@/components/ProtectedRoute';
-
+import { ThemeProvider } from '@/context/ThemeContext';
 import 'react-toastify/dist/ReactToastify.css';
 import '@/globals.css';
 
-// Lazy loaded pages
 const Home = lazy(() => import('@/pages/Home'));
 const SignIn = lazy(() => import('@/components/auth/SignIn'));
 const SignUp = lazy(() => import('@/components/auth/SignUp'));
@@ -19,21 +18,10 @@ const Dashboard = lazy(() => import('@/pages/dashboard/Dashboard'));
 const About = lazy(() => import('@/pages/About'));
 const NotFound = lazy(() => import('@/pages/NotFound'));
 
-const useModalRoot = (): void => {
-  useEffect(() => {
-    if (!document.getElementById('modal-root')) {
-      const modalRoot = document.createElement('div');
-      modalRoot.id = 'modal-root';
-      document.body.appendChild(modalRoot);
-    }
-  }, []);
-};
-
 function App(): JSX.Element {
-  useModalRoot();
-
   return (
-    <QueryClientProvider client={queryClient}>
+    <ThemeProvider>
+      <QueryClientProvider client={queryClient}>
         <Router>
           <Suspense fallback={<Loader progress={50} />}>
             <Routes>
@@ -57,7 +45,7 @@ function App(): JSX.Element {
                   }
                 />
                 <Route
-                  path="dashboard/*"
+                  path="dashboard/"
                   element={
                     <ProtectedRoute>
                       <Dashboard />
@@ -69,19 +57,9 @@ function App(): JSX.Element {
             </Routes>
           </Suspense>
         </Router>
-        <ToastContainer
-          position="top-right"
-          autoClose={5000}
-          hideProgressBar={false}
-          newestOnTop
-          closeOnClick
-          rtl={false}
-          pauseOnFocusLoss
-          draggable
-          pauseOnHover
-          theme="dark"
-        />
+        <ToastContainer position="top-right" autoClose={5000} theme="dark" />
       </QueryClientProvider>
+    </ThemeProvider>
   );
 }
 
