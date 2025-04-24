@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState, useCallback } from 'react';
 import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
-import authService from '@/api/auth/authService';
+import authService from '@/api/services/authService';
 import type {
   UserProfile,
   LoginCredentials,

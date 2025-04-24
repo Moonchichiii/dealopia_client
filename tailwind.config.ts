@@ -5,7 +5,14 @@ const config: Config = {
     './index.html',
     './src/**/*.{js,ts,jsx,tsx}',
   ],
-  darkMode: 'class',  
+  darkMode: 'class',
+  safelist: [
+    'bg-base-dark',
+    'bg-base-light',
+    'bg-home-dark',
+    'bg-home-light',
+    'home-page', 'dark', 'light'
+  ],
   theme: {
     extend: {
       colors: {

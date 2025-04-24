@@ -38,13 +38,6 @@ export interface ShopFilters {
     page_size?: number;
     ordering?: string;
 }
-
-
-/*
- // For wagtail intergration into shops & products! 
- import axios from 'axios';
- 
- const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
  
  export interface Shop {
     id: number;
@@ -76,4 +69,3 @@ export interface ShopFilters {
     discounted_price: number;
     shop: number;
  }
-*/

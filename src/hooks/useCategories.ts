@@ -1,5 +1,5 @@
 import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
-import { categoryService, dealService } from '@/api';
+import { categoryService, dealService } from '@/api/index';
 
 /**
  * Fetch all categories

@@ -15,7 +15,6 @@ const Home = lazy(() => import('@/pages/Home'));
 const SignIn = lazy(() => import('@/components/auth/SignIn'));
 const SignUp = lazy(() => import('@/components/auth/SignUp'));
 const Dashboard = lazy(() => import('@/pages/dashboard/Dashboard'));
-const About = lazy(() => import('@/pages/About'));
 const NotFound = lazy(() => import('@/pages/NotFound'));
 
 function App(): JSX.Element {
@@ -26,8 +25,7 @@ function App(): JSX.Element {
           <Suspense fallback={<Loader progress={50} />}>
             <Routes>
               <Route path="/" element={<Layout />}>
-                <Route index element={<Home />} />
-                <Route path="about" element={<About />} />
+                <Route index element={<Home />} />                
                 <Route
                   path="signin"
                   element={

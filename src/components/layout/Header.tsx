@@ -1,9 +1,12 @@
-// To properly implement the Header.tsx changes, we need to update the entire file
-// Here's the full implementation for the Header.tsx file:
-
-import { useEffect, useMemo, useCallback, useState, useRef } from 'react';
+/* src/components/layout/Header.tsx */
+import {
+  useEffect,
+  useMemo,
+  useCallback,
+  useState,
+  useRef,
+} from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { AnimatePresence, motion } from 'framer-motion';
 import {
   LogIn,
   MapPin,
@@ -16,647 +19,419 @@ import {
   X,
   Globe,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
 } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
-import { useAuthModal } from '@/components/auth/AuthModal';
-import { useAuth } from '@/hooks/useAuth';
-import { cn } from '@/utils/cn';
-import { useTheme } from '@/context/ThemeContext';
 import { createPortal } from 'react-dom';
+import { gsap } from 'gsap';
 
-interface LanguageOption {
-  code: string;
-  name: string;
-}
+import { useTranslation }   from 'react-i18next';
+import { useAuthModal }     from '@/components/auth/AuthModal';
+import { useAuth }          from '@/hooks/useAuth';
+import { useTheme }         from '@/context/ThemeContext';
+import { cn }               from '@/utils/cn';
 
+/* ------------------------------------------------------------------ */
 
-interface NavigationItem {
-  name: string;
-  href: string;
-  icon?: React.ComponentType<{ size?: number }>;
-}
+interface LanguageOption  { code:string; name:string; }
+interface NavigationItem  { name:string; href:string; icon?:React.ComponentType<{size?:number}>; }
+interface HeaderProps     { isDarkMode:boolean; toggleTheme:()=>void; }
 
-
-interface HeaderProps {
-  isDarkMode: boolean;
-  toggleTheme: () => void;
-}
-
+/* ------------------------------------------------------------------ */
 
 const Header = ({ isDarkMode, toggleTheme }: HeaderProps) => {
- 
-  const { t, i18n } = useTranslation();
-  const location = useLocation();
-  const navigate = useNavigate();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [hasScrolled, setHasScrolled] = useState(false);
-  const { user, logout, isAuthenticated } = useAuth();
-  const { openSignIn, openSignUp, AuthModal } = useAuthModal();
-  const [isLandscape, setIsLandscape] = useState(
-    window.matchMedia('(orientation: landscape) and (max-height: 500px)').matches
-  );
-  const overlayRef = useRef<HTMLDivElement | null>(null);
-  const [isLanguageOpen, setIsLanguageOpen] = useState(false);
+  /* ————————————————————————————————————————————————————— state */
+  const { t, i18n }         = useTranslation();
+  const location            = useLocation();
+  const navigate            = useNavigate();
+  const [isMenuOpen, setIsMenuOpen]                 = useState(false);
+  const [hasScrolled, setHasScrolled]               = useState(false);
+  const [isLanguageOpen, setIsLanguageOpen]         = useState(false);
   const [isMobileLanguageOpen, setIsMobileLanguageOpen] = useState(false);
 
+  const { user, logout, isAuthenticated }           = useAuth();
+  const { openSignIn, openSignUp, AuthModal }       = useAuthModal();
 
+  /* overlay + sidebar DOM refs (for GSAP) */
+  const overlayRef  = useRef<HTMLDivElement|null>(null);
+  const sidebarRef  = useRef<HTMLDivElement|null>(null);
+
+  /* ———————————————————————————————————————————————————— helpers */
+  const languages: LanguageOption[] = useMemo(() => [
+    { code:'en', name:'English'  },
+    { code:'de', name:'Deutsch'  },
+    { code:'fr', name:'Français' },
+    { code:'es', name:'Español'  },
+    { code:'it', name:'Italiano' },
+    { code:'nl', name:'Nederlands' },
+  ], []);
+
+  const navigation: NavigationItem[] = useMemo(() => {
+    const base = [
+      { name:'Home',  href:'/' },
+      { name:'Shops', href:'/shops', icon:Store },
+      // keep the same order, but make “About” a hash-link ⬇︎
+      { name:'About', href:'/#about' },
+    ];
+    return isAuthenticated ? [...base, { name:'Dashboard', href:'/dashboard' }] : base;
+  }, [isAuthenticated]);
+
+  const currentLangName =
+    languages.find(l => l.code === i18n.language)?.name ?? 'English';
+
+  /* ———————————————————————————— scroll / header glass blur */
   useEffect(() => {
-    let overlay = document.getElementById('overlay-root');
-    if (!overlay) {
-      overlay = document.createElement('div');
-      overlay.id = 'overlay-root';
-      document.body.appendChild(overlay);
-    }
-    overlayRef.current = overlay as HTMLDivElement;
-    return () => {
-      if (overlay && overlay.parentNode && !document.getElementById('overlay-root')) {
-        overlay.parentNode.removeChild(overlay);
-      }
-    };
+    const onScroll = () => setHasScrolled(window.scrollY > window.innerHeight * .03);
+    onScroll();
+    window.addEventListener('scroll', onScroll);
+    return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setHasScrolled(window.scrollY > window.innerHeight * 0.03);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-
-  useEffect(() => {
-    const checkOrientation = () => {
-      setIsLandscape(
-        window.matchMedia('(orientation: landscape) and (max-height: 500px)').matches
-      );
-    };
-    window.addEventListener('resize', checkOrientation);
-    return () => window.removeEventListener('resize', checkOrientation);
-  }, []);
-
-
+  /* ———————————————————————————— close menus on route-change */
   useEffect(() => {
     setIsMenuOpen(false);
     setIsLanguageOpen(false);
     setIsMobileLanguageOpen(false);
   }, [location.pathname]);
 
-
+  /* ———————————————————————————— body scroll-lock while menu */
   useEffect(() => {
     document.body.style.overflow = isMenuOpen ? 'hidden' : 'unset';
-    return () => {
-      document.body.style.overflow = 'unset';
-    };
+    return () => { document.body.style.overflow = 'unset'; };
   }, [isMenuOpen]);
 
-
+  /* ———————————————————————————— hide desktop lang pop-up click-outside */
   useEffect(() => {
-    if (isLanguageOpen) {
-      const closeLanguageDropdown = (e: MouseEvent) => {
-        const target = e.target as HTMLElement;
-        if (!target.closest('.language-selector')) {
-          setIsLanguageOpen(false);
-        }
-      };
-      document.addEventListener('click', closeLanguageDropdown);
-      return () => document.removeEventListener('click', closeLanguageDropdown);
-    }
+    if (!isLanguageOpen) return;
+    const close = (e:MouseEvent) => {
+      if (!(e.target as HTMLElement).closest('.language-selector')) setIsLanguageOpen(false);
+    };
+    document.addEventListener('click', close);
+    return () => document.removeEventListener('click', close);
   }, [isLanguageOpen]);
 
-  // Check for the scrollTo parameter when component mounts or location changes
-  useEffect(() => {
-    if (location.pathname === '/' && location.search) {
-      const params = new URLSearchParams(location.search);
-      const scrollTo = params.get('scrollTo');
-      
-      if (scrollTo === 'near-me') {
-        // We need to wait for the section to be rendered
-        setTimeout(() => {
-          const nearMeSection = document.getElementById('near-me');
-          if (nearMeSection) {
-            nearMeSection.scrollIntoView({ behavior: 'smooth' });
-            // Clean up the URL without reloading the page
-            window.history.replaceState({}, document.title, '/');
-          }
-        }, 500);
-      }
-    }
-  }, [location]);
-
-  const languages: LanguageOption[] = useMemo(() => [
-    { code: 'en', name: 'English' },
-    { code: 'de', name: 'Deutsch' },
-    { code: 'fr', name: 'Français' },
-    { code: 'es', name: 'Español' },
-    { code: 'it', name: 'Italiano' },
-    { code: 'nl', name: 'Nederlands' },
-  ], []);
-
-
-  const navigation: NavigationItem[] = useMemo(() => {
-    const baseNavigation = [
-      { name: 'Home', href: '/' },
-      { name: 'Shops', href: '/shops', icon: Store },
-      { name: 'About', href: '/about' },
-    ];
-    return isAuthenticated
-      ? [...baseNavigation, { name: 'Dashboard', href: '/dashboard' }]
-      : baseNavigation;
-  }, [isAuthenticated]);
-
-
-  const handleLogout = useCallback(async () => {
-    try {
-      await logout();
-    } catch (error) {
-      console.error('Logout failed:', error);
-    }
-  }, [logout]);
-
-
-  const handleLanguageChange = useCallback(
-    (langCode: string) => {
-      i18n.changeLanguage(langCode);
-      setIsLanguageOpen(false);
-      setIsMobileLanguageOpen(false);
-    },
-    [i18n]
-  );
-
-
-  const toggleMenu = useCallback(() => {
-    setIsMenuOpen(prev => !prev);
-  }, []);
-
-
-  const closeMenu = useCallback(() => {
-    setIsMenuOpen(false);
-    setIsMobileLanguageOpen(false);
-  }, []);
-
-
-  const toggleLanguageDropdown = useCallback(() => {
-    setIsLanguageOpen(prev => !prev);
-  }, []);
-
-
-  const toggleMobileLanguageDropdown = useCallback(() => {
-    setIsMobileLanguageOpen(prev => !prev);
-  }, []);
-
-  // NEW Near Me navigation handler that works from any page
+  /* ———————————————————————————— handle “Near Me” smart scroll */
   const handleNearMeClick = useCallback(() => {
-    // Check if we're already on the home page
     if (location.pathname === '/') {
-      // If on home page, just scroll to the section
-      const nearMeSection = document.getElementById('near-me');
-      nearMeSection?.scrollIntoView({ behavior: 'smooth' });
+      document.getElementById('near-me')?.scrollIntoView({behavior:'smooth'});
     } else {
-      // If on another page, navigate to home page with a query param
       navigate('/?scrollTo=near-me');
     }
   }, [location.pathname, navigate]);
 
+  /* ———————————————————————————— handle “About” smart scroll */
+  const handleAboutClick = useCallback(() => {
+    if (location.pathname === '/') {
+      document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' });
+    } else {
+      navigate('/#about');        // go home, hash already in URL
+    }
+  }, [location.pathname, navigate]);
 
-  const headerStyle = {
-    background: hasScrolled ? 'rgba(10, 10, 10, 0.2)' : 'transparent',
-    backdropFilter: hasScrolled ? 'blur(12px)' : 'none',
-    borderBottom: hasScrolled ? '1px solid rgba(38, 38, 38, 0.5)' : 'none'
-  };
+  /* ———————————————————————————— auth + language + menu toggles */
+  const handleLogout         = () => logout().catch(console.error);
+  const toggleMenu           = () => { if (!isMenuOpen) setIsMenuOpen(true); };
+  const openLanguageDesktop  = () => setIsLanguageOpen(v=>!v);
+  const toggleMobileLanguage = () => setIsMobileLanguageOpen(v=>!v);
 
+  /* ———————————————————————————— GSAP – animate sidebar in/out */
+  const closeMenu = useCallback(() => {
+    if (!sidebarRef.current || !overlayRef.current) { setIsMenuOpen(false); return; }
 
-  const renderSidebar = isMenuOpen && document.getElementById('overlay-root');
-  const currentLanguage = languages.find(lang => lang.code === i18n.language)?.name || 'English';
+    const tl = gsap.timeline({
+      defaults:{ ease:'power3.inOut', duration:0.4 },
+      onComplete: () => setIsMenuOpen(false),
+    });
+    tl.to(sidebarRef.current,  { x:'100%' }, 0)
+      .to(overlayRef.current,  { opacity:0 }, 0);
+  }, []);
 
+  /* when menu first opens, mount elements THEN animate them */
+  useEffect(() => {
+    if (!isMenuOpen) return;
+
+    // initial states
+    if (overlayRef.current) {
+      gsap.set(overlayRef.current, { opacity:0 });
+    }
+    if (sidebarRef.current) {
+      gsap.set(sidebarRef.current, { x:'100%' });
+    }
+
+    const tl = gsap.timeline({ defaults:{ ease:'power3.out', duration:0.45 } });
+    tl.to(overlayRef.current!, { opacity:1 }, 0)
+      .to(sidebarRef.current!, { x:0         }, 0);
+
+  }, [isMenuOpen]);
+
+  /* ------------------------------------------------------------------ */
+  /*                                  RENDER                            */
+  /* ------------------------------------------------------------------ */
+
+  const headerGlass: React.CSSProperties = hasScrolled
+    ? { background:'rgba(10,10,10,.20)', backdropFilter:'blur(12px)',
+        borderBottom:'1px solid rgba(38,38,38,.5)' }
+    : { background:'transparent' };
 
   return (
     <>
+      {/* ──────────────────────────────  DESKTOP HEADER  ────────────────────────────── */}
       <header
         className="fixed top-0 left-0 right-0 z-150 transition-all duration-300"
-        style={headerStyle}
+        style={headerGlass}
       >
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-16">
-            <Link
-              to="/"
-              className="flex items-center space-x-2 group"
-              aria-label="DealOpia Home"
-            >
-              <div
-                className="group-hover:bg-[rgba(139,92,246,0.2)]"
-                style={{
-                  backgroundColor: 'rgba(139, 92, 246, 0.1)',
-                  padding: '0.5rem',
-                  borderRadius: '0.75rem',
-                  transition: 'background-color 0.2s'
-                }}
-              >
-                <Tag className="w-6 h-6" style={{ color: '#a78bfa' }} aria-hidden="true" />
+
+            {/* logo */}
+            <Link to="/" className="flex items-center space-x-2 group">
+              <div className="p-2 rounded-xl transition-colors bg-[rgba(139,92,246,.1)] group-hover:bg-[rgba(139,92,246,.2)]">
+                <Tag className="w-6 h-6 text-primary-400" />
               </div>
-              <span className="text-xl font-display font-bold gradient-text">
-                DealOpia
-              </span>
+              <span className="text-xl font-display font-bold gradient-text">DealOpia</span>
             </Link>
 
-
+            {/* desktop nav */}
             <nav className="hidden md:flex items-center gap-6">
-              {navigation.map((item) => (
+              {navigation.map(item => (
                 <Link
                   key={item.name}
                   to={item.href}
-                  className="text-sm font-medium transition-colors flex items-center gap-2"
-                  style={{
-                    color: location.pathname === item.href ? '#a78bfa' : '#d4d4d4',
-                  }}
-                  onMouseOver={(e) => (e.currentTarget.style.color = '#a78bfa')}
-                  onMouseOut={(e) => {
-                    if (location.pathname !== item.href) {
-                      e.currentTarget.style.color = '#d4d4d4';
-                    }
-                  }}
+                  className="text-sm font-medium flex items-center gap-2 transition-colors"
+                  style={{color: location.pathname===item.href ? '#a78bfa' : '#d4d4d4'}}
+                  onClick={item.name === 'About' ? handleAboutClick : undefined}
                 >
                   {item.icon && <item.icon size={16} />}
                   {item.name}
                 </Link>
               ))}
-              {/* Updated Near Me button that works from any page */}
               <button
-                className="flex items-center gap-2 text-sm font-medium transition-colors"
-                style={{ color: '#d4d4d4' }}
                 onClick={handleNearMeClick}
-                onMouseOver={(e) => (e.currentTarget.style.color = '#a78bfa')}
-                onMouseOut={(e) => (e.currentTarget.style.color = '#d4d4d4')}
-                aria-label="Go to near me deals"
+                className="flex items-center gap-2 text-sm font-medium text-gray-300 transition-colors hover:text-primary-300"
               >
-                <MapPin size={16} />
-                <span>Near Me</span>
+                <MapPin size={16} /> <span>Near Me</span>
               </button>
             </nav>
 
-
+            {/* desktop right actions */}
             <div className="hidden md:flex items-center gap-4">
+              {/* theme toggle */}
               <button
                 onClick={toggleTheme}
-                className="p-2 rounded-full hover:bg-[rgba(139,92,246,0.1)] transition-colors"
-                aria-label={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+                className="p-2 rounded-full hover:bg-primary-500/20 transition-colors"
               >
-                {isDarkMode ? (
-                  <Sun size={20} className="text-[#a78bfa]" />
-                ) : (
-                  <Moon size={20} className="text-[#a78bfa]" />
-                )}
+                {isDarkMode ? <Sun size={20} className="text-primary-300" />
+                             : <Moon size={20} className="text-primary-300" />}
               </button>
 
-
+              {/* language selector */}
               <div className="relative language-selector">
                 <button
-                  onClick={toggleLanguageDropdown}
-                  className="flex items-center gap-2 p-2 rounded-lg hover:bg-[rgba(139,92,246,0.1)] text-[#d4d4d4] hover:text-[#a78bfa] transition-colors"
-                  aria-haspopup="true"
-                  aria-expanded={isLanguageOpen}
-                  aria-label="Select language"
+                  onClick={openLanguageDesktop}
+                  className="flex items-center gap-2 p-2 rounded-lg hover:bg-primary-500/10 transition-colors"
                 >
-                  <Globe size={18} className="text-[#a78bfa]" />
-                  <span className="text-sm font-medium">{currentLanguage}</span>
-                  <svg
-                    className={`w-4 h-4 text-[#a78bfa] transition-transform ${isLanguageOpen ? 'rotate-180' : ''}`}
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <polyline points="6 9 12 15 18 9"></polyline>
-                  </svg>
+                  <Globe size={18} className="text-primary-400" />
+                  <span className="text-sm">{currentLangName}</span>
+                  {isLanguageOpen ? <ChevronUp size={14}/> : <ChevronDown size={14}/>}
                 </button>
 
-
                 {isLanguageOpen && (
-                  <div className="absolute top-full right-0 mt-1 z-50 w-40 bg-neutral-900/90 backdrop-blur-md rounded-lg border border-neutral-800/50 shadow-lg overflow-hidden">
-                    <div className="py-1">
-                      {languages.map((lang) => (
-                        <button
-                          key={lang.code}
-                          onClick={() => handleLanguageChange(lang.code)}
-                          className={`flex items-center w-full px-4 py-2 text-sm ${
-                            lang.code === i18n.language
-                              ? 'bg-primary-500/10 text-primary-400 font-medium'
-                              : 'text-neutral-300 hover:bg-neutral-800/50'
-                          }`}
-                        >
-                          {lang.name}
-                          {lang.code === i18n.language && (
-                            <svg
-                              className="ml-auto w-4 h-4 text-primary-400"
-                              xmlns="http://www.w3.org/2000/svg"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            >
-                              <polyline points="20 6 9 17 4 12"></polyline>
-                            </svg>
-                          )}
-                        </button>
-                      ))}
-                    </div>
+                  <div
+                    className="absolute top-full right-0 mt-1 z-50 w-40 overflow-hidden rounded-lg border border-neutral-800/50 bg-neutral-900/90 backdrop-blur shadow-lg"
+                  >
+                    {languages.map(lang => (
+                      <button
+                        key={lang.code}
+                        onClick={() => { i18n.changeLanguage(lang.code); setIsLanguageOpen(false); }}
+                        className={cn(
+                          'flex w-full items-center px-4 py-2 text-sm',
+                          lang.code===i18n.language
+                            ? 'bg-primary-500/10 text-primary-400 font-medium'
+                            : 'text-neutral-300 hover:bg-neutral-800/50'
+                        )}
+                      >
+                        {lang.name}
+                      </button>
+                    ))}
                   </div>
                 )}
               </div>
 
-
+              {/* auth buttons */}
               {isAuthenticated ? (
                 <>
                   <Link
                     to="/dashboard"
-                    className="flex items-center gap-2 bg-[rgba(139,92,246,0.1)] text-[#a78bfa] px-4 py-2 rounded-lg font-medium transition-colors hover:bg-[rgba(139,92,246,0.2)]"
+                    className="flex items-center gap-2 rounded-lg bg-primary-500/15 px-4 py-2 text-primary-300 hover:bg-primary-500/25"
                   >
-                    <span>{user?.first_name || 'Dashboard'}</span>
+                    {user?.first_name ?? 'Dashboard'}
                   </Link>
                   <button
                     onClick={handleLogout}
-                    className="flex items-center gap-2 bg-[rgba(255,255,255,0.05)] text-[#d4d4d4] hover:text-white px-4 py-2 rounded-lg font-medium transition-colors hover:bg-[rgba(255,255,255,0.1)]"
+                    className="rounded-lg bg-white/5 px-4 py-2 text-gray-300 hover:bg-white/10"
                   >
-                    <span>Sign Out</span>
+                    Sign out
                   </button>
                 </>
               ) : (
                 <>
                   <button
                     onClick={openSignIn}
-                    className="flex items-center gap-2 bg-[rgba(139,92,246,0.1)] text-[#a78bfa] px-4 py-2 rounded-lg font-medium transition-colors hover:bg-[rgba(139,92,246,0.2)]"
+                    className="flex items-center gap-2 rounded-lg bg-primary-500/15 px-4 py-2 text-primary-300 hover:bg-primary-500/25"
                   >
-                    <LogIn size={18} aria-hidden="true" />
-                    <span>Sign In</span>
+                    <LogIn size={18}/> Sign in
                   </button>
                   <button
                     onClick={openSignUp}
-                    className="flex items-center gap-2 bg-[#8b5cf6] hover:bg-[#7c3aed] text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                    className="flex items-center gap-2 rounded-lg bg-primary-500 px-4 py-2 text-white hover:bg-primary-600"
                   >
-                    <UserPlus size={18} aria-hidden="true" />
-                    <span>Sign Up</span>
+                    <UserPlus size={18}/> Sign up
                   </button>
                 </>
               )}
             </div>
 
-
+            {/* mobile buttons */}
             <div className="flex md:hidden items-center gap-2">
               <button
                 onClick={toggleTheme}
-                className="p-2 rounded-lg bg-[rgba(139,92,246,0.1)] transition-colors"
-                aria-label={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+                className="p-2 rounded-lg bg-primary-500/15"
               >
-                {isDarkMode ? (
-                  <Sun size={18} className="text-[#a78bfa]" />
-                ) : (
-                  <Moon size={18} className="text-[#a78bfa]" />
-                )}
+                {isDarkMode ? <Sun size={18} className="text-primary-300"/> :
+                               <Moon size={18} className="text-primary-300"/>}
               </button>
-
-
               <button
                 onClick={toggleMenu}
-                className="p-2 rounded-lg bg-gray-900/50 hover:bg-gray-800/50 transition-colors"
-                aria-expanded={isMenuOpen}
-                aria-label="Toggle menu"
+                className="p-2 rounded-lg bg-gray-900/50"
+                aria-label="open menu"
               >
-                {isMenuOpen ? (
-                  <X className="w-6 h-6 text-gray-300" aria-hidden="true" />
-                ) : (
-                  <Menu className="w-6 h-6 text-gray-300" aria-hidden="true" />
-                )}
+                {isMenuOpen ? <X   className="w-6 h-6 text-gray-300"/> :
+                               <Menu className="w-6 h-6 text-gray-300"/>}
               </button>
             </div>
           </div>
         </div>
       </header>
 
-
       {AuthModal}
 
+      {/* ───────────────────────────  MOBILE OVERLAY + SIDEBAR  ───────────────────── */}
+      {isMenuOpen &&
+        createPortal(
+          <>
+            <div
+              ref={overlayRef}
+              className="mobile-menu-overlay md:hidden"
+              onClick={closeMenu}
+            />
+            <aside
+              ref={sidebarRef}
+              className="mobile-menu-container md:hidden"
+            >
+              {/* — top bar — */}
+              <div className="flex items-center justify-end p-4 border-b border-gray-700/50">
+                <button onClick={closeMenu} className="p-1 rounded-lg hover:bg-gray-800/40">
+                  <X className="w-5 h-5 text-gray-400"/>
+                </button>
+              </div>
 
-      {renderSidebar && createPortal(
-        <>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/80 backdrop-blur-sm md:hidden z-[9998]"
-            onClick={closeMenu}
-            aria-hidden="true"
-            style={{ display: 'block' }}
-          />
-          <motion.div
-            initial={{ x: '100%' }}
-            animate={{ x: 0 }}
-            exit={{ x: '100%' }}
-            transition={{ type: 'spring', damping: 20 }}
-            className={cn(
-              "fixed right-0 top-0 bottom-0 md:hidden flex flex-col z-[9999]",
-              isLandscape
-                ? "w-1/2 max-w-xs bg-gray-900/95 backdrop-blur-md border-l border-gray-800/50 overflow-y-auto"
-                : "w-3/4 max-w-xs bg-gray-900 border-l border-gray-800/50"
-            )}
-            style={{
-              height: isLandscape ? '100%' : 'auto',
-              maxHeight: '100%',
-              display: 'flex',
-            }}
-          >
-            <div className="flex items-center justify-between p-4 border-b border-gray-800/50">
-              <div></div>
-              <button
-                onClick={closeMenu}
-                className="p-1 rounded-lg hover:bg-gray-800/50 transition-colors"
-                aria-label="Close menu"
-              >
-                <X className="w-5 h-5 text-gray-400" aria-hidden="true" />
-              </button>
-            </div>
-            <div className="flex flex-col h-full overflow-y-auto">
-              <nav className={cn(
-                "flex-1 space-y-1",
-                isLandscape ? "p-2" : "p-4 space-y-2"
-              )}>
-                {navigation.map((item) => (
+              {/* — nav items — */}
+              <nav className="flex-1 overflow-y-auto p-4 space-y-2">
+                {navigation.map(item => (
                   <Link
                     key={item.name}
                     to={item.href}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.5rem',
-                      transition: 'all 0.2s',
-                      color: location.pathname === item.href ? '#a78bfa' : '#d4d4d4',
-                      backgroundColor: location.pathname === item.href ?
-                        'rgba(139,92,246,0.1)' : 'transparent',
-                      padding: isLandscape ? '0.5rem 0.75rem' : '0.75rem 1rem',
-                      borderRadius: '0.75rem',
-                      fontSize: isLandscape ? '0.8rem' : '0.875rem',
-                      fontWeight: 500
+                    onClick={() => {
+                      closeMenu();
+                      if (item.name === 'About') { handleAboutClick(); }
                     }}
-                    className={location.pathname !== item.href ? "hover:bg-[rgba(38,38,38,0.5)]" : ""}
-                    onClick={closeMenu}
+                    className={cn(
+                      'flex items-center gap-2 rounded-lg px-4 py-3 text-sm font-medium',
+                      location.pathname===item.href
+                        ? 'bg-primary-500/10 text-primary-400'
+                        : 'text-gray-300 hover:bg-gray-800/40'
+                    )}
                   >
-                    {item.icon && <item.icon size={isLandscape ? 16 : 18} />}
+                    {item.icon && <item.icon size={18}/>}
                     {item.name}
                   </Link>
                 ))}
-                {/* Updated Near Me button that works from any page */}
                 <button
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    width: '100%',
-                    padding: isLandscape ? '0.5rem 0.75rem' : '0.75rem 1rem',
-                    borderRadius: '0.75rem',
-                    fontSize: isLandscape ? '0.8rem' : '0.875rem',
-                    fontWeight: 500,
-                    transition: 'colors 0.2s',
-                    color: '#d4d4d4',
-                    textAlign: 'left'
-                  }}
-                  className="hover:bg-[rgba(38,38,38,0.5)]"
-                  onClick={() => {
-                    closeMenu();
-                    handleNearMeClick();
-                  }}
+                  onClick={() => { closeMenu(); handleNearMeClick(); }}
+                  className="flex items-center gap-2 rounded-lg px-4 py-3 text-sm font-medium text-gray-300 hover:bg-gray-800/40 w-full"
                 >
-                  <MapPin size={isLandscape ? 16 : 18} />
-                  <span>Near Me</span>
+                  <MapPin size={18}/> Near Me
                 </button>
-               
-                <div className={cn("pt-2", isLandscape ? "px-2" : "px-4")}>
-                  <button
-                    onClick={toggleMobileLanguageDropdown}
-                    className="flex items-center justify-between w-full text-neutral-300 p-2 rounded-lg hover:bg-neutral-800/30 transition-colors"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Globe size={isLandscape ? 16 : 18} className="text-primary-400" />
-                      <span className="text-sm font-medium">Language</span>
-                    </div>
-                    {isMobileLanguageOpen ? (
-                      <ChevronUp size={16} className="text-neutral-400" />
-                    ) : (
-                      <ChevronDown size={16} className="text-neutral-400" />
-                    )}
-                  </button>
-                 
-                  {isMobileLanguageOpen && (
-                    <div className="mt-1 bg-neutral-800/50 backdrop-blur-sm rounded-lg border border-neutral-700/50 overflow-hidden">
-                      {languages.map((lang) => (
-                        <button
-                          key={lang.code}
-                          onClick={() => handleLanguageChange(lang.code)}
-                          className={`flex items-center w-full px-3 py-2 text-sm ${
-                            lang.code === i18n.language
-                              ? 'bg-primary-500/10 text-primary-400 font-medium'
-                              : 'text-neutral-300 hover:bg-neutral-700/30'
-                          }`}
-                        >
-                          <span className="flex-1 text-left">{lang.name}</span>
-                          {lang.code === i18n.language && (
-                            <svg
-                              className="w-4 h-4 text-primary-400 ml-2"
-                              xmlns="http://www.w3.org/2000/svg"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            >
-                              <polyline points="20 6 9 17 4 12"></polyline>
-                            </svg>
-                          )}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
+
+                {/* language mobile accordion */}
+                <button
+                  onClick={toggleMobileLanguage}
+                  className="mt-1 flex w-full items-center justify-between rounded-lg px-4 py-3 text-sm text-gray-300 hover:bg-gray-800/40"
+                >
+                  <span className="flex items-center gap-2">
+                    <Globe size={18} className="text-primary-400"/> Language
+                  </span>
+                  {isMobileLanguageOpen ? <ChevronUp size={16}/> : <ChevronDown size={16}/>}
+                </button>
+                {isMobileLanguageOpen &&
+                  <div className="mt-1 overflow-hidden rounded-lg border border-gray-700/40">
+                    {languages.map(lang => (
+                      <button
+                        key={lang.code}
+                        onClick={() => { i18n.changeLanguage(lang.code); setIsMobileLanguageOpen(false); }}
+                        className={cn(
+                          'flex w-full items-center px-4 py-2 text-sm',
+                          lang.code===i18n.language
+                            ? 'bg-primary-500/10 text-primary-400'
+                            : 'text-gray-300 hover:bg-gray-800/30'
+                        )}
+                      >
+                        {lang.name}
+                      </button>
+                    ))}
+                  </div>}
               </nav>
-              <div className={cn(
-                "space-y-2 border-t border-gray-800/50",
-                isLandscape ? "p-2" : "p-4 space-y-3"
-              )}>
+
+              {/* — auth actions — */}
+              <div className="border-t border-gray-700/50 p-4 space-y-3">
                 {isAuthenticated ? (
                   <>
                     <Link
                       to="/dashboard"
-                      className="flex items-center justify-center gap-2 w-full bg-[rgba(139,92,246,0.1)] text-[#a78bfa] rounded-lg font-medium transition-colors hover:bg-[rgba(139,92,246,0.2)]"
-                      style={{
-                        padding: isLandscape ? '0.4rem 0.75rem' : '0.5rem 1rem',
-                        fontSize: isLandscape ? '0.8rem' : '0.875rem'
-                      }}
                       onClick={closeMenu}
+                      className="block w-full rounded-lg bg-primary-500/15 px-4 py-2 text-center text-primary-300"
                     >
-                      <span>
-                        {user?.first_name ? `${user.first_name}'s Dashboard` : 'Dashboard'}
-                      </span>
+                      {user?.first_name ?? 'Dashboard'}
                     </Link>
                     <button
-                      onClick={() => {
-                        closeMenu();
-                        handleLogout();
-                      }}
-                      className="flex items-center justify-center gap-2 w-full bg-[rgba(255,255,255,0.05)] text-[#d4d4d4] rounded-lg font-medium transition-colors hover:bg-[rgba(255,255,255,0.1)]"
-                      style={{
-                        padding: isLandscape ? '0.4rem 0.75rem' : '0.5rem 1rem',
-                        fontSize: isLandscape ? '0.8rem' : '0.875rem'
-                      }}
+                      onClick={() => { closeMenu(); handleLogout(); }}
+                      className="block w-full rounded-lg bg-white/5 px-4 py-2 text-gray-300"
                     >
-                      <span>Sign Out</span>
+                      Sign out
                     </button>
                   </>
                 ) : (
                   <>
                     <button
-                      onClick={() => {
-                        closeMenu();
-                        openSignIn();
-                      }}
-                      className="flex items-center justify-center gap-2 w-full bg-[rgba(139,92,246,0.1)] text-[#a78bfa] rounded-lg font-medium transition-colors hover:bg-[rgba(139,92,246,0.2)]"
-                      style={{
-                        padding: isLandscape ? '0.4rem 0.75rem' : '0.5rem 1rem',
-                        fontSize: isLandscape ? '0.8rem' : '0.875rem'
-                      }}
+                      onClick={() => { closeMenu(); openSignIn(); }}
+                      className="block w-full rounded-lg bg-primary-500/15 px-4 py-2 text-primary-300"
                     >
-                      <LogIn size={isLandscape ? 16 : 18} aria-hidden="true" />
-                      <span>Sign In</span>
+                      Sign in
                     </button>
                     <button
-                      onClick={() => {
-                        closeMenu();
-                        openSignUp();
-                      }}
-                      className="flex items-center justify-center gap-2 w-full bg-[#8b5cf6] hover:bg-[#7c3aed] text-white rounded-lg font-medium transition-colors"
-                      style={{
-                        padding: isLandscape ? '0.4rem 0.75rem' : '0.5rem 1rem',
-                        fontSize: isLandscape ? '0.8rem' : '0.875rem'
-                      }}
+                      onClick={() => { closeMenu(); openSignUp(); }}
+                      className="block w-full rounded-lg bg-primary-500 px-4 py-2 text-white"
                     >
-                      <UserPlus size={isLandscape ? 16 : 18} aria-hidden="true" />
-                      <span>Sign Up</span>
+                      Sign up
                     </button>
                   </>
                 )}
               </div>
-            </div>
-          </motion.div>
-        </>,
-        document.getElementById('overlay-root')!
-      )}
+            </aside>
+          </>,
+          document.getElementById('overlay-root')!
+        )}
     </>
   );
 };
-
 
 export default Header;

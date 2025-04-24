@@ -33,54 +33,35 @@ const SearchBar: React.FC<SearchBarProps> = ({
     initialFilters.categories || []
   );
   const searchContainerRef = useRef<HTMLDivElement>(null);
-  const { latitude, longitude } = useGeolocation();
+  const formRef = useRef<HTMLFormElement>(null);
   
+  // Use geolocation hook with autoDetect for optimal user experience
+  const { latitude, longitude, loading: locationLoading } = useGeolocation({
+    autoDetect: true,
+  });
+ 
   // Track the last search params to prevent identical searches
   const lastSearchParamsRef = useRef<{ query: string; filtersString: string }>({
     query: '',
     filtersString: '',
   });
-  
-  // Memorize filters to avoid unnecessary re-renders
+ 
+  // Memoize filters to avoid unnecessary re-renders
   const currentFilters = useMemo(() => {
     const filters = {
       ...initialFilters,
       categories: selectedCategories,
     };
-    
+   
     // Only add location if available and user hasn't manually cleared it
     if (latitude && longitude) {
       filters.latitude = latitude;
       filters.longitude = longitude;
       filters.radius = 10;
     }
-    
+   
     return filters;
   }, [initialFilters, selectedCategories, latitude, longitude]);
-
-  // Manual search handler for form submit
-  const handleSearch = useCallback((e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    
-    // Stringify filters for comparison
-    const filtersString = JSON.stringify(currentFilters);
-    
-    // Don't make the same search twice
-    if (
-      searchQuery === lastSearchParamsRef.current.query &&
-      filtersString === lastSearchParamsRef.current.filtersString
-    ) {
-      return;
-    }
-    
-    // Update last search params
-    lastSearchParamsRef.current = {
-      query: searchQuery,
-      filtersString,
-    };
-    
-    onSearch(searchQuery, currentFilters);
-  }, [searchQuery, currentFilters, onSearch]);
 
   // Handle click outside to close filter dropdown
   useEffect(() => {
@@ -96,6 +77,39 @@ const SearchBar: React.FC<SearchBarProps> = ({
     };
   }, []);
 
+  // Focus input on mount and preselect text
+  useEffect(() => {
+    const inputElement = formRef.current?.querySelector('input');
+    if (inputElement && initialQuery) {
+      inputElement.focus();
+      inputElement.select();
+    }
+  }, [initialQuery]);
+
+  // Manual search handler for form submit
+  const handleSearch = useCallback((e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+   
+    // Stringify filters for comparison
+    const filtersString = JSON.stringify(currentFilters);
+   
+    // Don't make the same search twice
+    if (
+      searchQuery === lastSearchParamsRef.current.query &&
+      filtersString === lastSearchParamsRef.current.filtersString
+    ) {
+      return;
+    }
+   
+    // Update last search params
+    lastSearchParamsRef.current = {
+      query: searchQuery,
+      filtersString,
+    };
+   
+    onSearch(searchQuery, currentFilters);
+  }, [searchQuery, currentFilters, onSearch]);
+
   // Toggle category selection
   const toggleCategory = useCallback((categoryId: number) => {
     setSelectedCategories(prev =>
@@ -110,7 +124,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
     setSelectedCategories([]);
   }, []);
 
-  // Near me search handler
+  // Near me search handler - optimized to minimize requests
   const handleNearMeSearch = useCallback(() => {
     if (latitude && longitude) {
       // Update last search params with location
@@ -120,9 +134,9 @@ const SearchBar: React.FC<SearchBarProps> = ({
         longitude,
         radius: 10,
       };
-      
+     
       const filtersString = JSON.stringify(filtersWithLocation);
-      
+     
       // Don't make the same search twice
       if (
         searchQuery === lastSearchParamsRef.current.query &&
@@ -130,43 +144,34 @@ const SearchBar: React.FC<SearchBarProps> = ({
       ) {
         return;
       }
-      
+     
       // Update last search params
       lastSearchParamsRef.current = {
         query: searchQuery,
         filtersString,
       };
-      
+     
       onSearch(searchQuery, filtersWithLocation);
     }
   }, [searchQuery, currentFilters, latitude, longitude, onSearch]);
 
-  // Initial search effect - only runs once
-  useEffect(() => {
-    // Only search if we have a query or location
-    if (initialQuery || (latitude && longitude)) {
-      const filters = {
-        ...initialFilters,
-        ...(latitude && longitude ? { latitude, longitude, radius: 10 } : {}),
-      };
-      
-      // Update last search params to prevent duplicate search
-      lastSearchParamsRef.current = {
-        query: initialQuery,
-        filtersString: JSON.stringify(filters),
-      };
-      
-      // Only make one initial search when component mounts
-      if (initialQuery.length >= 3 || latitude) {
-        onSearch(initialQuery, filters);
-      }
+  // Clear search query
+  const handleClearSearch = useCallback(() => {
+    setSearchQuery('');
+    
+    // Only trigger a new search if there was a previous query
+    if (lastSearchParamsRef.current.query) {
+      // Small delay to let the state update first
+      setTimeout(() => {
+        lastSearchParamsRef.current.query = '';
+        onSearch('', currentFilters);
+      }, 0);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [currentFilters, onSearch]);
 
   return (
     <div className={cn("relative", className)} ref={searchContainerRef}>
-      <form onSubmit={handleSearch} className="relative">
+      <form onSubmit={handleSearch} className="relative" ref={formRef}>
         <div className="flex items-center gap-2 p-2 bg-white/90 dark:bg-black/90 backdrop-blur-sm rounded-full shadow-soft">
           {/* Search Input */}
           <div className="flex-1 relative">
@@ -181,7 +186,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
             {searchQuery && (
               <button
                 type="button"
-                onClick={() => setSearchQuery('')}
+                onClick={handleClearSearch}
                 className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 aria-label="Clear search"
               >
@@ -196,13 +201,15 @@ const SearchBar: React.FC<SearchBarProps> = ({
               type="button"
               onClick={() => {
                 handleNearMeSearch();
+                // Smoothly scroll to near-me section if it exists
                 const nearMeSection = document.getElementById('near-me');
                 nearMeSection?.scrollIntoView({ behavior: 'smooth' });
               }}
               className="hidden md:flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white rounded-full transition-colors"
               aria-label="Search near my location"
+              disabled={locationLoading}
             >
-              <MapPin size={18} />
+              <MapPin size={18} className={locationLoading ? 'animate-pulse' : ''} />
               <span>{t('search.nearMe')}</span>
             </button>
           )}

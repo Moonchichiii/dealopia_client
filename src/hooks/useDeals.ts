@@ -5,7 +5,7 @@ import {
   useQueryClient
 } from '@tanstack/react-query';
 import { toast } from 'react-toastify';
-import dealService from '@/api/deals/dealService';
+import dealService from '@/api/services/dealService';
 import { Deal, DealFilters } from '@/types/deals';
 
 // Query key factory for better cache management

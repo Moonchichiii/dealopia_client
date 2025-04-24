@@ -1,65 +1,69 @@
-import apiClient from '@/api/client';
+import { axiosInstance } from '@/api/client';
 import { Category } from '@/types/categories';
-
-const CACHE_DURATIONS = {
-  CATEGORIES: 24 * 60 * 60 * 1000,
-  CATEGORY_DETAIL: 12 * 60 * 60 * 1000,
-  FEATURED: 6 * 60 * 60 * 1000,
-  CATEGORY_DEALS: 3 * 60 * 60 * 1000,
-};
-
-const handleCategoryError = (error: unknown, fallback: unknown = []): unknown => {
-  console.error('Category service error:', error);
-  return fallback;
-};
+import { ENDPOINTS } from '@/api/endpoints';
 
 const categoryService = {
   getCategories: async (
     params?: { parent?: number; is_active?: boolean; limit?: number }
   ): Promise<Category[]> => {
     try {
-      return await apiClient.cachedGet<Category[]>('/api/v1/categories/', { params }, CACHE_DURATIONS.CATEGORIES);
-    } catch (error: unknown) {
-      return handleCategoryError(error, []);
+      const response = await axiosInstance.get<Category[]>(ENDPOINTS.CATEGORIES.BASE, { params });
+      return response.data;
+    } catch (error) {
+      console.error('Category service error:', error);
+      return [];
     }
   },
 
   getCategory: async (id: number | string): Promise<Category | null> => {
     if (!id) return null;
     try {
-      return await apiClient.cachedGet<Category>(`/api/v1/categories/${id}/`, {}, CACHE_DURATIONS.CATEGORY_DETAIL);
-    } catch (error: unknown) {
-      return handleCategoryError(error, null);
+      const response = await axiosInstance.get<Category>(ENDPOINTS.CATEGORIES.DETAIL(id));
+      return response.data;
+    } catch (error) {
+      console.error('Category service error:', error);
+      return null;
     }
   },
 
   getFeaturedCategories: async (limit: number = 6): Promise<Category[]> => {
     try {
-      return await apiClient.cachedGet<Category[]>('/api/v1/categories/featured/', { params: { limit } }, CACHE_DURATIONS.FEATURED);
-    } catch (error: unknown) {
-      return handleCategoryError(error, []);
+      const response = await axiosInstance.get<Category[]>(
+        ENDPOINTS.CATEGORIES.FEATURED,
+        { params: { limit } }
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Category service error:', error);
+      return [];
     }
   },
 
   getCategoryDeals: async (categoryId: number | string, limit: number = 12): Promise<Category[]> => {
     if (!categoryId) return [];
     try {
-      return await apiClient.cachedGet<Category[]>(`/api/v1/categories/${categoryId}/deals/`, { params: { limit } }, CACHE_DURATIONS.CATEGORY_DEALS);
-    } catch (error: unknown) {
-      return handleCategoryError(error, []);
+      const response = await axiosInstance.get<Category[]>(
+        ENDPOINTS.CATEGORIES.DEALS(categoryId),
+        { params: { limit } }
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Category service error:', error);
+      return [];
     }
   },
 
   getCategoryTree: async (): Promise<Category[]> => {
     try {
-      const allCategories: Category[] = await apiClient.cachedGet('/api/v1/categories/', { params: { is_active: true } }, CACHE_DURATIONS.CATEGORIES);
+      const allCategories: Category[] = await categoryService.getCategories({ is_active: true });
       const rootCategories = allCategories.filter((cat) => !cat.parent);
       rootCategories.forEach((root) => {
         root.subcategories = allCategories.filter((cat) => cat.parent === root.id);
       });
       return rootCategories;
-    } catch (error: unknown) {
-      return handleCategoryError(error, []);
+    } catch (error) {
+      console.error('Category service error:', error);
+      return [];
     }
   },
 
@@ -74,8 +78,9 @@ const categoryService = {
         return [...parents, category];
       }
       return breadcrumbs;
-    } catch (error: unknown) {
-      return handleCategoryError(error, []);
+    } catch (error) {
+      console.error('Category service error:', error);
+      return [];
     }
   },
 
@@ -85,22 +90,38 @@ const categoryService = {
       const category = await categoryService.getCategory(categoryId);
       if (!category) return [];
       if (category.parent) {
-        const siblings = await apiClient.cachedGet<Category[]>('/api/v1/categories/', { params: { parent: category.parent, is_active: true } }, CACHE_DURATIONS.CATEGORIES);
+        const response = await axiosInstance.get<Category[]>(
+          ENDPOINTS.CATEGORIES.BASE,
+          { params: { parent: category.parent, is_active: true } }
+        );
+        const siblings = response.data;
         return siblings.filter((cat) => cat.id !== category.id).slice(0, limit);
       }
-      return apiClient.cachedGet<Category[]>('/api/v1/categories/', { params: { parent: null, is_active: true } }, CACHE_DURATIONS.CATEGORIES)
-        .then((cats) => cats.filter((cat) => cat.id !== category.id).slice(0, limit));
-    } catch (error: unknown) {
-      return handleCategoryError(error, []);
+
+      const response = await axiosInstance.get<Category[]>(
+        ENDPOINTS.CATEGORIES.BASE,
+        { params: { parent: null, is_active: true } }
+      );
+      return response.data
+        .filter((cat) => cat.id !== category.id)
+        .slice(0, limit);
+    } catch (error) {
+      console.error('Category service error:', error);
+      return [];
     }
   },
 
   searchCategories: async (query: string): Promise<Category[]> => {
     if (!query || query.length < 2) return [];
     try {
-      return await apiClient.cachedGet<Category[]>('/api/v1/categories/', { params: { search: query } }, 5 * 60 * 1000);
-    } catch (error: unknown) {
-      return handleCategoryError(error, []);
+      const response = await axiosInstance.get<Category[]>(
+        ENDPOINTS.CATEGORIES.BASE,
+        { params: { search: query } }
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Category service error:', error);
+      return [];
     }
   },
 

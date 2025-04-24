@@ -24,7 +24,6 @@
     "compression": "^1.8.0",
     "depcheck": "^1.4.7",
     "express": "^4.21.2",
-    "framer-motion": "^12.5.0",
     "gsap": "npm:@gsap/business@^3.12.7",
     "i18next": "^24.2.2",
     "i18next-browser-languagedetector": "^8.0.4",

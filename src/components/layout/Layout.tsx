@@ -1,91 +1,83 @@
+/* src/layout/Layout.tsx */
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { ScrollTrigger, useGSAP } from '@/utils/useGsap';
-import CookieConsent from '@/components/utils/CookieConsent';
-import Header from '@/components/layout/Header';
-import Loader from '@/components/ui/Loader';
+
+import CookieConsent   from '@/components/utils/CookieConsent';
+import Header          from '@/components/layout/Header';
+import Loader          from '@/components/ui/Loader';
 import { ScrollToTopButton } from '@/components/utils/ScrollToTop';
-import { useTheme } from '@/context/ThemeContext';
+import { useTheme }    from '@/context/ThemeContext';
+
 const Footer = lazy(() => import('@/components/layout/Footer'));
 
 const Layout = () => {
-  const location = useLocation();
-  const isHomePage = location.pathname === '/';
-  const [showFooter, setShowFooter] = useState(false);
+  const { pathname }  = useLocation();
+  const isHome        = pathname === '/';
+
   const { theme, toggleTheme } = useTheme();
-  const isDarkMode = theme === 'dark';
+  const isDark = theme === 'dark';
 
+  /* ───────────── Body background – pure CSS classes, no inline styles ───────────── */
   useEffect(() => {
-    if (isHomePage) {
-      document.body.classList.add('home-page');
-      if (isDarkMode) {
-        document.body.style.background = 'linear-gradient(135deg, rgba(76, 29, 149, 0.3) 0%, #0a0a0a 50%, rgba(22, 78, 99, 0.3) 100%)';
-      } else {
-        document.body.style.background = 'linear-gradient(135deg, rgba(167, 139, 250, 0.1) 0%, #f5f7fa 50%, rgba(103, 232, 249, 0.1) 100%)';
-      }
-    } else {
-      document.body.classList.remove('home-page');
-      document.body.style.backgroundColor = isDarkMode ? '#0a0a0a' : '#f5f7fa';
-      // Reset background for non-home pages
-      document.body.style.background = '';
-    }
-    return () => {
-      document.body.classList.remove('home-page');
-      document.body.style.background = '';
-      document.body.style.backgroundColor = '';
-    };
-  }, [isHomePage, isDarkMode]);
+    const body = document.body;
+    body.classList.toggle('home-page', isHome);
+    body.classList.toggle('dark',       isDark);
+    body.classList.toggle('light',     !isDark);
 
-  useGSAP(() => {
-    ScrollTrigger.config({
-      autoRefreshEvents: 'visibilitychange,DOMContentLoaded,load,resize'
-    });
+    // gradient backgrounds via Tailwind utilities (defined once in globals.css)
+    body.classList.toggle('bg-home-dark',  isHome && isDark);
+    body.classList.toggle('bg-home-light', isHome && !isDark);
+    body.classList.toggle('bg-base-dark',  !isHome && isDark);
+    body.classList.toggle('bg-base-light', !isHome && !isDark);
+
     return () => {
-      ScrollTrigger.getAll().forEach(trigger => trigger.kill());
+      body.removeAttribute('class');
     };
+  }, [isHome, isDark]);
+
+  /* ───────────── Global GSAP config ───────────── */
+  useGSAP(() => {
+    ScrollTrigger.config({ autoRefreshEvents: 'visibilitychange,DOMContentLoaded,load,resize' });
+    return () => ScrollTrigger.getAll().forEach((t) => t.kill());
   }, []);
 
-  useEffect(() => {
-    const footerPlaceholder = document.getElementById('footer-placeholder');
-    if (!footerPlaceholder) return; // Guard clause if placeholder not found
+  /* ───────────── Lazy footer via IntersectionObserver ───────────── */
+  const [showFooter, setShowFooter] = useState(false);
 
-    const footerObserver = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting) {
-          setShowFooter(true);
-          footerObserver.unobserve(footerPlaceholder); // More specific than disconnect
-        }
-      },
+  useEffect(() => {
+    const placeholder = document.getElementById('footer-placeholder');
+    if (!placeholder) return;
+
+    const io = new IntersectionObserver(
+      ([entry]) => entry.isIntersecting && setShowFooter(true),
       { rootMargin: '200px' }
     );
 
-    footerObserver.observe(footerPlaceholder);
+    io.observe(placeholder);
+    return () => io.disconnect();
+  }, []);
 
-    return () => {
-        // Check if the observer is still observing the element before unobserving
-        if (footerPlaceholder) {
-            footerObserver.unobserve(footerPlaceholder);
-        }
-        // Disconnect might still be useful if observing multiple elements, but unobserve is safer here
-        footerObserver.disconnect();
-    };
-  }, []); // No dependencies needed if it only runs once on mount
-
+  /* ───────────── Layout ───────────── */
   return (
-    <div className={`min-h-screen flex flex-col relative ${isDarkMode ? 'dark text-gray-100' : 'light text-gray-900'}`}>
-      <Header isDarkMode={isDarkMode} toggleTheme={toggleTheme} />
-      {/* Apply responsive padding using Tailwind classes */}
-      <main className={`flex-grow w-full ${isHomePage ? 'p-0' : 'pt-16 px-4 md:px-8'} relative z-10`}>
+    <div className="min-h-screen flex flex-col relative text-gray-900 dark:text-gray-100">
+      <Header isDarkMode={isDark} toggleTheme={toggleTheme} />
+
+      <main className={`flex-grow w-full ${isHome ? 'p-0' : 'pt-16 px-4 md:px-8'} relative z-10`}>
         <Suspense fallback={<Loader progress={50} />}>
           <Outlet />
         </Suspense>
       </main>
-      <div id="footer-placeholder" className="footer-placeholder relative z-10" style={{ display: showFooter ? 'none' : 'block', height: '1px' }} /> {/* Added height for observer */}
+
+      {/* footer placeholder for IO */}
+      <div id="footer-placeholder" className="h-px" />
+
       {showFooter && (
-        <Suspense fallback={<div className="footer-placeholder relative z-10" style={{ height: '1px' }} />}> {/* Added height for consistency */}
+        <Suspense fallback={<div className="h-px" />}>
           <Footer />
         </Suspense>
       )}
+
       <CookieConsent />
       <ScrollToTopButton />
     </div>
