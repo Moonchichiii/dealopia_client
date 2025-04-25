@@ -1,4 +1,3 @@
-/* src/components/layout/Header.tsx */
 import {
   useEffect,
   useMemo,
@@ -274,17 +273,22 @@ const Header = ({ isDarkMode, toggleTheme }: HeaderProps) => {
                 </>
               ) : (
                 <>
+                  {/* ✅  OLD “PURPLE-GLASS” SIGN-IN BUTTON */}
                   <button
                     onClick={openSignIn}
-                    className="flex items-center gap-2 rounded-lg bg-primary-500/15 px-4 py-2 text-primary-300 hover:bg-primary-500/25"
+                    className="flex items-center gap-2 bg-[rgba(139,92,246,0.1)] text-[#a78bfa] px-4 py-2 rounded-lg font-medium transition-colors hover:bg-[rgba(139,92,246,0.2)]"
                   >
-                    <LogIn size={18}/> Sign in
+                    <LogIn size={18} aria-hidden="true" />
+                    <span>Sign&nbsp;In</span>
                   </button>
+
+                  {/* ✅  OLD “SOLID PURPLE” SIGN-UP BUTTON */}
                   <button
                     onClick={openSignUp}
-                    className="flex items-center gap-2 rounded-lg bg-primary-500 px-4 py-2 text-white hover:bg-primary-600"
+                    className="flex items-center gap-2 bg-[#8b5cf6] hover:bg-[#7c3aed] text-white px-4 py-2 rounded-lg font-medium transition-colors"
                   >
-                    <UserPlus size={18}/> Sign up
+                    <UserPlus size={18} aria-hidden="true" />
+                    <span>Sign&nbsp;Up</span>
                   </button>
                 </>
               )}
@@ -411,17 +415,22 @@ const Header = ({ isDarkMode, toggleTheme }: HeaderProps) => {
                   </>
                 ) : (
                   <>
+                    {/* ✅  OLD MOBILE SIGN-IN BUTTON */}
                     <button
                       onClick={() => { closeMenu(); openSignIn(); }}
-                      className="block w-full rounded-lg bg-primary-500/15 px-4 py-2 text-primary-300"
+                      className="block w-full rounded-lg bg-[rgba(139,92,246,0.1)] px-4 py-2 text-[#a78bfa] font-medium transition-colors hover:bg-[rgba(139,92,246,0.2)]"
                     >
-                      Sign in
+                      <LogIn size={16} className="inline mr-2" />
+                      Sign&nbsp;In
                     </button>
+
+                    {/* ✅  OLD MOBILE SIGN-UP BUTTON */}
                     <button
                       onClick={() => { closeMenu(); openSignUp(); }}
-                      className="block w-full rounded-lg bg-primary-500 px-4 py-2 text-white"
+                      className="block w-full rounded-lg bg-[#8b5cf6] hover:bg-[#7c3aed] px-4 py-2 text-white font-medium transition-colors"
                     >
-                      Sign up
+                      <UserPlus size={16} className="inline mr-2" />
+                      Sign&nbsp;Up
                     </button>
                   </>
                 )}
